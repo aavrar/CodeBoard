@@ -6,10 +6,8 @@ const nextConfig = {
   typescript: {
     ignoreBuildErrors: true,
   },
-  images: {
-    unoptimized: true,
-  },
-  // Removed invalid experimental config
+  // Remove static export configuration for Vercel deployment
+  // Vercel handles Next.js builds natively without static export
 }
 
 export default nextConfig
