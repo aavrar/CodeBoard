@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Frontend Form Debug Test</title>
+</head>
+<body>
+    <h1>Frontend Form Debug Test</h1>
+    <form id="testForm">
+        <div>
+            <label>Example Text:</label>
+            <textarea id="text" required>Hello मुझे खुशी हुई आपसे मिलकर nice to meet you!</textarea>
+        </div>
+        <div>
+            <label>Languages (comma separated):</label>
+            <input id="languages" value="English,Hindi" required>
+        </div>
+        <div>
+            <label>Context:</label>
+            <textarea id="context">Frontend form debug test</textarea>
+        </div>
+        <div>
+            <label>Region:</label>
+            <input id="region" value="California">
+        </div>
+        <div>
+            <label>Platform:</label>
+            <select id="platform">
+                <option value="conversation">Face-to-face</option>
+                <option value="social-media">Social Media</option>
+            </select>
+        </div>
+        <div>
+            <label>Age:</label>
+            <select id="age">
+                <option value="26-35">26-35</option>
+                <option value="18-25">18-25</option>
+            </select>
+        </div>
+        <button type="submit">Submit Test</button>
+    </form>
+    
+    <div id="result"></div>
+    
+    <script>
+        const API_BASE_URL = "http://localhost:3001/api";
+        
+        document.getElementById('testForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            console.log('Form submission started...');
+            const resultDiv = document.getElementById('result');
+            resultDiv.innerHTML = 'Submitting...';
+            
+            const formData = {
+                text: document.getElementById('text').value,
+                languages: document.getElementById('languages').value.split(',').map(l => l.trim()),
+                context: document.getElementById('context').value || undefined,
+                region: document.getElementById('region').value || undefined,
+                platform: document.getElementById('platform').value || undefined,
+                age: document.getElementById('age').value || undefined
+            };
+            
+            console.log('Submitting data:', formData);
+            
+            try {
+                const response = await fetch(`${API_BASE_URL}/examples`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(formData)
+                });
+                
+                console.log('Response status:', response.status);
+                const result = await response.json();
+                console.log('Response data:', result);
+                
+                if (response.ok && result.success) {
+                    resultDiv.innerHTML = `<p style="color: green;">✅ SUCCESS! Created example with ID: ${result.data.id}</p>`;
+                } else {
+                    resultDiv.innerHTML = `<p style="color: red;">❌ FAILED: ${result.error || 'Unknown error'}</p>`;
+                }
+                
+            } catch (error) {
+                console.error('Submission error:', error);
+                resultDiv.innerHTML = `<p style="color: red;">❌ ERROR: ${error.message}</p>`;
+            }
+        });
+        
+        console.log('Test form loaded. Fill out and submit to test API.');
+    </script>
+</body>
+</html>
