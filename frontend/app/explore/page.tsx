@@ -6,12 +6,18 @@ import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { useState, useEffect } from "react"
-import { Search, Download, Copy, MapPin, Clock, MessageSquare } from "lucide-react"
+import { Search, Download, Copy, MapPin, Clock, MessageSquare, ExternalLink } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
 import { fetchExamples, fetchAvailableLanguages, fetchAvailableRegions, fetchAvailablePlatforms } from "@/lib/api"
 import type { CodeSwitchingExample, SearchFilters } from "@/types"
+import { VotingPanel } from "@/components/voting/voting-panel"
+import { useAuth } from "@/contexts/auth-context"
+import Link from "next/link"
 
 export default function ExplorePage() {
+  // Auth context
+  const { user, isAuthenticated } = useAuth()
+  
   // Search and filter state
   const [searchTerm, setSearchTerm] = useState("")
   const [selectedLanguage, setSelectedLanguage] = useState("all")
@@ -232,70 +238,91 @@ export default function ExplorePage() {
             <h3 className="text-xl font-medium text-neutral-900 mb-2">Loading examples...</h3>
           </div>
         ) : (
-          <div className="grid lg:grid-cols-2 gap-6">
+          <div className="grid xl:grid-cols-1 gap-8">
             {filteredExamples.map((example) => (
-              <Card key={example.id} className="border-neutral-200 hover:shadow-lg transition-shadow">
-                <CardHeader className="pb-3">
-                  <div className="flex justify-between items-start">
-                    <div className="flex flex-wrap gap-2">
-                      {example.languages.map((lang, index) => (
-                        <Badge
-                          key={lang}
-                          variant="secondary"
-                          className={index === 0 ? "bg-teal-100 text-teal-800" : "bg-amber-100 text-amber-800"}
-                        >
-                          {lang}
-                        </Badge>
-                      ))}
-                      {/* TODO: Add verification badge based on backend verification status */}
-                      {example.isVerified && (
-                        <Badge variant="outline" className="text-green-600 border-green-600">
-                          Verified
-                        </Badge>
+              <div key={example.id} className="grid lg:grid-cols-2 gap-6">
+                {/* Example Card */}
+                <Card className="border-neutral-200 hover:shadow-lg transition-shadow">
+                  <CardHeader className="pb-3">
+                    <div className="flex justify-between items-start">
+                      <div className="flex flex-wrap gap-2">
+                        {example.languages.map((lang, index) => (
+                          <Badge
+                            key={lang}
+                            variant="secondary"
+                            className={index === 0 ? "bg-teal-100 text-teal-800" : "bg-amber-100 text-amber-800"}
+                          >
+                            {lang}
+                          </Badge>
+                        ))}
+                        {/* TODO: Add verification badge based on backend verification status */}
+                        {example.isVerified && (
+                          <Badge variant="outline" className="text-green-600 border-green-600">
+                            Verified
+                          </Badge>
+                        )}
+                      </div>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => copyToClipboard(example.text)}
+                        className="h-8 w-8"
+                      >
+                        <Copy className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </CardHeader>
+
+                  <CardContent className="space-y-4">
+                    <div className="bg-neutral-50 p-4 rounded-lg">
+                      <p className="text-neutral-900 font-medium leading-relaxed">"{example.text}"</p>
+                    </div>
+
+                    <div className="space-y-2 text-sm">
+                      {example.context && (
+                        <div className="flex items-center gap-2 text-neutral-600">
+                          <MessageSquare className="h-4 w-4" />
+                          <span>{example.context}</span>
+                        </div>
                       )}
-                    </div>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => copyToClipboard(example.text)}
-                      className="h-8 w-8"
-                    >
-                      <Copy className="h-4 w-4" />
-                    </Button>
-                  </div>
-                </CardHeader>
 
-                <CardContent className="space-y-4">
-                  <div className="bg-neutral-50 p-4 rounded-lg">
-                    <p className="text-neutral-900 font-medium leading-relaxed">"{example.text}"</p>
-                  </div>
+                      {example.region && (
+                        <div className="flex items-center gap-2 text-neutral-600">
+                          <MapPin className="h-4 w-4" />
+                          <span>{example.region}</span>
+                        </div>
+                      )}
 
-                  <div className="space-y-2 text-sm">
-                    {example.context && (
                       <div className="flex items-center gap-2 text-neutral-600">
-                        <MessageSquare className="h-4 w-4" />
-                        <span>{example.context}</span>
+                        <Clock className="h-4 w-4" />
+                        <span>
+                          {example.platform && `${example.platform} • `}
+                          {example.age && `${example.age} • `}
+                          {new Date(example.timestamp).toLocaleDateString()}
+                        </span>
                       </div>
-                    )}
-
-                    {example.region && (
-                      <div className="flex items-center gap-2 text-neutral-600">
-                        <MapPin className="h-4 w-4" />
-                        <span>{example.region}</span>
-                      </div>
-                    )}
-
-                    <div className="flex items-center gap-2 text-neutral-600">
-                      <Clock className="h-4 w-4" />
-                      <span>
-                        {example.platform && `${example.platform} • `}
-                        {example.age && `${example.age} • `}
-                        {new Date(example.timestamp).toLocaleDateString()}
-                      </span>
                     </div>
-                  </div>
-                </CardContent>
-              </Card>
+
+                    {/* View Details Link */}
+                    <div className="pt-2 border-t border-neutral-200">
+                      <Link href={`/examples/${example.id}`}>
+                        <Button variant="outline" size="sm" className="w-full">
+                          <ExternalLink className="mr-2 h-4 w-4" />
+                          View Details & Vote
+                        </Button>
+                      </Link>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                {/* Voting Panel */}
+                <VotingPanel
+                  exampleId={example.id}
+                  isAuthenticated={isAuthenticated}
+                  userTier={user?.tier}
+                  className="h-fit"
+                />
+              </div>
             ))}
           </div>
         )}

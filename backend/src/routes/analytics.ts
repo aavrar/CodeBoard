@@ -19,7 +19,7 @@ const analyticsFiltersSchema = z.object({
   minConfidence: z.number().min(0).max(1).optional()
 })
 
-router.get('/research', authenticateToken, requireResearcher, async (req: Request, res: Response) => {
+router.get('/research', authenticateToken, requireResearcher, async (req: express.Request, res: express.Response) => {
   const authReq = req as AuthenticatedRequest
   try {
     const filters = analyticsFiltersSchema.parse(req.query)
@@ -46,12 +46,13 @@ router.get('/research', authenticateToken, requireResearcher, async (req: Reques
     console.error('Research analytics error:', error)
     
     if (error instanceof z.ZodError) {
-      return res.status(400).json({
+      res.status(400).json({
         success: false,
         data: null,
         message: 'Invalid filter parameters',
         error: error.errors
       })
+      return
     }
 
     res.status(error instanceof Error && error.message.includes('permissions') ? 403 : 500).json({
@@ -63,19 +64,20 @@ router.get('/research', authenticateToken, requireResearcher, async (req: Reques
   }
 })
 
-router.get('/language-pair/:pair', authenticateToken, requireResearcher, async (req: Request, res: Response) => {
+router.get('/language-pair/:pair', authenticateToken, requireResearcher, async (req: express.Request, res: express.Response) => {
   const authReq = req as AuthenticatedRequest
   try {
     const { pair } = req.params
     const limit = parseInt(req.query.limit as string) || 50
 
     if (limit > 200) {
-      return res.status(400).json({
+      res.status(400).json({
         success: false,
         data: null,
         message: 'Limit cannot exceed 200',
         error: 'Invalid parameter'
       })
+      return
     }
 
     const details = await analyticsService.getLanguagePairDetails(authReq.user.id, pair, limit)
@@ -99,7 +101,7 @@ router.get('/language-pair/:pair', authenticateToken, requireResearcher, async (
 })
 
 // Export metadata for research tools
-router.get('/metadata', authenticateToken, requireResearcher, async (req: Request, res: Response) => {
+router.get('/metadata', authenticateToken, requireResearcher, async (req: express.Request, res: express.Response) => {
   const authReq = req as AuthenticatedRequest
   try {
     // Get available filter options
@@ -157,18 +159,19 @@ router.get('/metadata', authenticateToken, requireResearcher, async (req: Reques
 })
 
 // Data export endpoint for research analytics
-router.get('/export/:format', authenticateToken, requireResearcher, async (req: Request, res: Response) => {
+router.get('/export/:format', authenticateToken, requireResearcher, async (req: express.Request, res: express.Response) => {
   const authReq = req as AuthenticatedRequest
   try {
     const { format } = req.params
     
     if (!['csv', 'json'].includes(format)) {
-      return res.status(400).json({
+      res.status(400).json({
         success: false,
         data: null,
         message: 'Invalid export format. Use csv or json',
         error: 'Invalid parameter'
       })
+      return
     }
 
     const filters = analyticsFiltersSchema.parse(req.query)
@@ -202,7 +205,8 @@ router.get('/export/:format', authenticateToken, requireResearcher, async (req: 
     if (format === 'json') {
       res.setHeader('Content-Type', 'application/json')
       res.setHeader('Content-Disposition', `attachment; filename="codeboard-analytics-${new Date().toISOString().split('T')[0]}.json"`)
-      return res.json(exportData)
+      res.json(exportData)
+      return
     }
 
     // CSV format
@@ -215,12 +219,13 @@ router.get('/export/:format', authenticateToken, requireResearcher, async (req: 
     console.error('Export error:', error)
     
     if (error instanceof z.ZodError) {
-      return res.status(400).json({
+      res.status(400).json({
         success: false,
         data: null,
         message: 'Invalid filter parameters',
         error: error.errors
       })
+      return
     }
 
     res.status(500).json({

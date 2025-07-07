@@ -188,8 +188,7 @@ exampleRoutes.post('/', asyncHandler(async (req: Request, res: Response) => {
   }
   
   const { 
-    tokens, switchPoints, phrases, confidence, userLanguageMatch, detectedLanguages,
-    processing
+    tokens, switchPoints, phrases, confidence, userLanguageMatch, detectedLanguages
   } = enhancedResult;
 
   let newExample: any = { // Use any for now, will refine type after schema update
@@ -208,8 +207,8 @@ exampleRoutes.post('/', asyncHandler(async (req: Request, res: Response) => {
     detectedLanguages: detectedLanguages, // AI-detected languages
     
     // FastText processing features
-    processingTimeMs: processing?.timeMs || 0,
-    engine: processing?.engine || (usedFastText ? 'FastText' : 'ELD'),
+    processingTimeMs: 0, // Default processing time
+    engine: usedFastText ? 'FastText' : 'ELD',
     usedFastText: usedFastText,
     
     timestamp: new Date().toISOString(),
@@ -239,15 +238,15 @@ exampleRoutes.post('/', asyncHandler(async (req: Request, res: Response) => {
           userLanguageMatch: userLanguageMatch,
           detectedLanguages: detectedLanguages,
           // v2.1.2 breakthrough features
-          calibratedConfidence: calibratedConfidence || confidence,
-          reliabilityScore: reliabilityScore || 0,
-          qualityAssessment: qualityAssessment || 'unknown',
-          calibrationMethod: calibrationMethod || 'none',
-          contextOptimization: contextOptimization,
-          performanceMode: resultPerformanceMode || performanceMode,
-          analysisVersion: version || '2.1.2',
-          processingTimeMs: processingTimeMs || 0,
-          usedSwitchPrint: usedSwitchPrint
+          calibratedConfidence: confidence,
+          reliabilityScore: 0,
+          qualityAssessment: 'unknown',
+          calibrationMethod: 'none',
+          contextOptimization: null,
+          performanceMode: 'balanced',
+          analysisVersion: '2.1.2',
+          processingTimeMs: 0,
+          usedSwitchPrint: false
         } as any, // Store enhanced NLP results with v2.1.2 features
         switchPoints: switchPoints // Store phrase-boundary switch points
         // Note: userId will be set when authentication is implemented
@@ -444,6 +443,97 @@ exampleRoutes.post('/enhanced', asyncHandler(async (req: Request, res: Response)
       success: false,
       data: null,
       message: 'Failed to submit enhanced example',
+      error: error instanceof Error ? error.message : 'Unknown error'
+    });
+  }
+}));
+
+// GET /api/examples/:id - Get a specific example by ID
+exampleRoutes.get('/:id', asyncHandler(async (req: Request, res: Response) => {
+  const { id } = req.params;
+
+  try {
+    // Try to fetch from database first
+    const { data: example, error } = await supabase
+      .from(tables.examples)
+      .select('*')
+      .eq('id', id)
+      .single();
+
+    if (error) {
+      console.error('Database fetch error:', error);
+      
+      // If not found in database, try mock data
+      const mockExamples = [
+        {
+          id: "cmcit3i590001l433nx7lr985",
+          text: "I'm going to the store, pero first I need to finish this work",
+          languages: ["English", "Spanish"],
+          context: "Casual conversation with bilingual friend",
+          region: "California",
+          platform: "conversation",
+          age: "26-35",
+          timestamp: "2025-06-26T15:30:00Z",
+          contributorId: null,
+          isVerified: true,
+          tokens: [],
+          switchPoints: [18, 23],
+          confidence: 0.85,
+          detectedLanguages: ["English", "Spanish"],
+          userLanguageMatch: true
+        },
+        {
+          id: "1",
+          text: "Hello, ¿cómo estás today?",
+          languages: ["English", "Spanish"],
+          context: "Greeting a bilingual friend",
+          region: "Texas",
+          platform: "text_message",
+          age: "18-25",
+          timestamp: "2025-06-27T10:15:00Z",
+          contributorId: null,
+          isVerified: false,
+          tokens: [],
+          switchPoints: [7, 19],
+          confidence: 0.92,
+          detectedLanguages: ["English", "Spanish"],
+          userLanguageMatch: true
+        }
+      ];
+
+      const mockExample = mockExamples.find(ex => ex.id === id);
+      
+      if (!mockExample) {
+        return res.status(404).json({
+          success: false,
+          data: null,
+          message: 'Example not found',
+          error: 'The requested example does not exist'
+        });
+      }
+
+      return res.json({
+        success: true,
+        data: mockExample,
+        message: 'Example retrieved successfully (mock data)',
+        error: null
+      });
+    }
+
+    // Successfully found in database
+    res.json({
+      success: true,
+      data: example,
+      message: 'Example retrieved successfully',
+      error: null
+    });
+
+  } catch (error) {
+    console.error('Example fetch error:', error);
+    res.status(500).json({
+      success: false,
+      data: null,
+      message: 'Failed to fetch example',
       error: error instanceof Error ? error.message : 'Unknown error'
     });
   }

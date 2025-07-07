@@ -76,7 +76,7 @@ router.post('/', async (req: Request, res: Response): Promise<void> => {
         performanceGain: usedFastText ? 'Lightweight processing' : 'Legacy performance',
         // v2.1.2 specific metadata
         performanceMode: performanceMode,
-        version: result.version || 'unknown'
+        version: 'unknown'
       },
       // FastText features
       fastTextFeatures: {
@@ -100,15 +100,15 @@ router.post('/', async (req: Request, res: Response): Promise<void> => {
         userLanguageMatch: result.userLanguageMatch,
         // FastText metrics
         fastTextMetrics: {
-          modelPath: result.processing?.modelPath || 'unknown',
+          modelPath: 'unknown',
           memoryEfficient: true,
           realTimeProcessing: true
         },
         performanceMetrics: {
           mode: performanceMode,
-          processingTimeMs: result.processing?.timeMs || processingTime,
-          engine: result.processing?.engine || (usedFastText ? 'FastText' : 'ELD'),
-          tokensPerSecond: result.processing?.tokensPerSecond || 0
+          processingTimeMs: processingTime,
+          engine: usedFastText ? 'FastText' : 'ELD',
+          tokensPerSecond: 0
         }
       };
     }

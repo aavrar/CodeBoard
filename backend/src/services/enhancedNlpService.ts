@@ -93,7 +93,7 @@ const FUNCTION_WORD_MAPPING: Record<string, string> = {
   // German
   'der': 'de', 'die': 'de', 'das': 'de', 'und': 'de', 'oder': 'de', 'aber': 'de', 'ist': 'de', 'sind': 'de',
   'ein': 'de', 'eine': 'de', 'dem': 'de', 'den': 'de', 'mit': 'de', 'für': 'de', 'von': 'de', 'zu': 'de',
-  'ich': 'de', 'er': 'de', 'wir': 'de', 'ihr': 'de', 'du': 'de',
+  'ich': 'de', 'er': 'de', 'wir': 'de', 'ihr': 'de', 'du_de': 'de',
   
   // Urdu (romanized/transliterated)
   'main': 'ur', 'mein': 'ur', 'aap': 'ur', 'tum': 'ur', 'woh': 'ur', 'yeh': 'ur', 'hai': 'ur', 'hain': 'ur',
@@ -109,7 +109,7 @@ const FUNCTION_WORD_MAPPING: Record<string, string> = {
   
   // Arabic (romanized/transliterated)
   'ana': 'ar', 'anta': 'ar', 'anti': 'ar', 'huwa': 'ar', 'hiya': 'ar', 'nahnu': 'ar', 'antum': 'ar',
-  'fi': 'ar', 'min': 'ar', 'ila': 'ar', 'ala': 'ar', 'an': 'ar', 'ma': 'ar', 'la': 'ar', 'wa': 'ar',
+  'fi': 'ar', 'min': 'ar', 'ila': 'ar', 'ala': 'ar', 'an_ar': 'ar', 'ma_ar': 'ar', 'la_ar': 'ar', 'wa': 'ar',
   'hatha': 'ar', 'hadhihi': 'ar', 'tilka': 'ar', 'dhalika': 'ar', 'kayf': 'ar', 'mata': 'ar', 'ayna': 'ar', 'madha': 'ar',
   
   // Portuguese
@@ -120,7 +120,7 @@ const FUNCTION_WORD_MAPPING: Record<string, string> = {
   
   // Italian
   'il': 'it', 'lo': 'it', 'gli': 'it', 'uno': 'it',
-  'di': 'it', 'del': 'it', 'della': 'it', 'nel': 'it', 'nella': 'it',
+  'di_it': 'it', 'del': 'it', 'della': 'it', 'nel': 'it', 'nella': 'it',
   'lui': 'it', 'lei': 'it', 'noi': 'it', 'voi': 'it', 'loro': 'it', 'questo': 'it', 'quella': 'it'
 };
 

@@ -26,6 +26,7 @@ export function Navbar() {
       { href: "/", label: "Home", roles: ["COMMUNITY", "RESEARCHER", "ADMIN"] },
       { href: "/submit", label: "Submit", roles: ["COMMUNITY", "RESEARCHER", "ADMIN"] },
       { href: "/explore", label: "Explore", roles: ["COMMUNITY", "RESEARCHER", "ADMIN"] },
+      { href: "/community", label: "Community", roles: ["COMMUNITY", "RESEARCHER", "ADMIN"] },
       { href: "/dashboard", label: "Dashboard", roles: ["COMMUNITY", "RESEARCHER", "ADMIN"] },
     ]
 

@@ -64,6 +64,22 @@ export const api = {
       status: response.status,
       statusText: response.statusText
     }
+  },
+  
+  delete: async (url: string, config?: { headers?: Record<string, string> }) => {
+    const response = await fetch(`${API_BASE_URL}${url}`, {
+      method: 'DELETE',
+      headers: {
+        'Content-Type': 'application/json',
+        ...config?.headers
+      }
+    })
+    
+    return {
+      data: await response.json(),
+      status: response.status,
+      statusText: response.statusText
+    }
   }
 }
 

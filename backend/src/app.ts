@@ -14,6 +14,7 @@ import { exampleRoutes } from './routes/examples.js'
 import { dashboardRoutes } from './routes/dashboard.js'
 import { referenceRoutes } from './routes/reference.js'
 import adminRoutes from './routes/admin.js'
+import votingRoutes from './routes/voting.js'
 import { nlpCache } from './services/cacheService.js'
 import { fastTextService } from './services/fastTextService.js'
 
@@ -131,6 +132,7 @@ app.use('/api/examples', exampleRoutes)
 app.use('/api/dashboard', dashboardRoutes)
 app.use('/api', referenceRoutes)
 app.use('/api/admin', adminRoutes)
+app.use('/api/voting', votingRoutes)
 
 // 404 handler
 app.use('*', (req, res) => {

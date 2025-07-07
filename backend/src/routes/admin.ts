@@ -10,7 +10,7 @@ interface AuthenticatedRequest extends express.Request {
 }
 
 // GET /api/admin/stats - Get admin dashboard statistics
-router.get('/stats', authenticateToken, requireAdmin, async (req: Request, res: Response) => {
+router.get('/stats', authenticateToken, requireAdmin, async (req: express.Request, res: express.Response) => {
   try {
     // Get user counts by tier
     const { data: users, error: usersError } = await supabase
@@ -87,7 +87,7 @@ router.get('/stats', authenticateToken, requireAdmin, async (req: Request, res: 
 })
 
 // GET /api/admin/applications - Get research applications
-router.get('/applications', authenticateToken, requireAdmin, async (req: Request, res: Response) => {
+router.get('/applications', authenticateToken, requireAdmin, async (req: express.Request, res: express.Response) => {
   try {
     const { data: applications, error } = await supabase
       .from(tables.researchApplications)
@@ -142,7 +142,7 @@ router.get('/applications', authenticateToken, requireAdmin, async (req: Request
 })
 
 // POST /api/admin/applications/:id/approve - Approve research application
-router.post('/applications/:id/approve', authenticateToken, requireAdmin, async (req: Request, res: Response) => {
+router.post('/applications/:id/approve', authenticateToken, requireAdmin, async (req: express.Request, res: express.Response) => {
   try {
     const { id } = req.params
     const { notes } = req.body
@@ -161,8 +161,9 @@ router.post('/applications/:id/approve', authenticateToken, requireAdmin, async 
       .select('user_id')
       .single()
 
-    if (updateError) {
-      handleSupabaseError(updateError, 'application approval')
+    if (updateError || !application) {
+      handleSupabaseError(updateError || new Error('Application not found'), 'application approval')
+      return
     }
 
     // Update user tier to RESEARCHER
@@ -194,7 +195,7 @@ router.post('/applications/:id/approve', authenticateToken, requireAdmin, async 
 })
 
 // POST /api/admin/applications/:id/reject - Reject research application
-router.post('/applications/:id/reject', authenticateToken, requireAdmin, async (req: Request, res: Response) => {
+router.post('/applications/:id/reject', authenticateToken, requireAdmin, async (req: express.Request, res: express.Response) => {
   try {
     const { id } = req.params
     const { notes } = req.body
@@ -234,7 +235,7 @@ router.post('/applications/:id/reject', authenticateToken, requireAdmin, async (
 })
 
 // GET /api/admin/users - Get users for management (paginated)
-router.get('/users', authenticateToken, requireAdmin, async (req: Request, res: Response) => {
+router.get('/users', authenticateToken, requireAdmin, async (req: express.Request, res: express.Response) => {
   try {
     const page = parseInt(req.query.page as string) || 1
     const limit = parseInt(req.query.limit as string) || 50

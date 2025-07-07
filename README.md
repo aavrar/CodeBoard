@@ -11,6 +11,9 @@ CodeBoard is a production-ready platform that enables researchers and communitie
 **Current Architecture (July 2025)**
 - ✅ **FastText Language Detection** - Lightweight, efficient detection for 176+ languages
 - ✅ **Supabase Integration** - Complete migration from Prisma to Supabase
+- ✅ **Community Voting System** - Real-time quality verification with user votes (FULLY FUNCTIONAL)
+- ✅ **Manual Tagging Interface** - Interactive switch point editing for registered users
+- ✅ **Quality Scoring & Verification** - Automatic verification status based on community feedback
 - ✅ **Comprehensive Reference Data** - 82 languages, 101 regions, 46 platforms
 - ✅ **Searchable UI Components** - Advanced dropdowns with search and filtering
 - ✅ **Role-Based Access Control** - Community/Researcher/Admin tiers with JWT validation
@@ -18,6 +21,7 @@ CodeBoard is a production-ready platform that enables researchers and communitie
 - ✅ **Real-time Analytics** - Dashboard with data visualization
 - ✅ **Performance Optimization** - <200MB memory footprint for free hosting
 - ✅ **Multi-tier Authentication** - JWT with OAuth support for Google and GitHub
+- ✅ **CUID Support** - Fixed validation schemas to support Supabase CUID identifiers
 
 ## Performance Characteristics
 
@@ -82,11 +86,23 @@ cp .env.example .env.local
 npm run dev  # Starts on port 3000
 ```
 
-### 4. Verify Integration
+### 4. Database Schema Setup
+```bash
+# Run the voting system schema in Supabase Dashboard
+# 1. Go to https://supabase.com/dashboard
+# 2. Select your project → SQL Editor
+# 3. Copy and paste contents of backend/src/utils/supabase-schema.sql
+# 4. Click "Run" (ignore the "destructive operation" warning - it's safe)
+```
+
+### 5. Verify Integration  
 ```bash
 # Test FastText integration
 cd backend
 node --import tsx/esm src/scripts/testFastTextIntegration.ts
+
+# Test voting system endpoints
+curl -X GET "http://localhost:3001/api/voting/leaderboard"
 ```
 
 ## API Endpoints
@@ -111,11 +127,22 @@ POST /api/examples
 }
 
 # Community voting on examples
-POST /api/examples/:id/vote
+POST /api/voting/examples/:id/vote
 {
-  "vote": "accurate|inaccurate",
-  "userId": "user123"
+  "voteType": "accurate|inaccurate|helpful|unhelpful",
+  "confidence": 4,
+  "comment": "Clear language boundaries"
 }
+```
+
+### Community Voting & Quality
+```bash
+GET /api/voting/examples/:id/stats       # Vote statistics and quality score
+POST /api/voting/examples/:id/tags       # Submit manual language tags
+GET /api/voting/examples/:id/tags        # Get manual tags for example
+DELETE /api/voting/examples/:id/vote/:type # Remove user vote
+GET /api/voting/leaderboard              # Community contribution rankings
+GET /api/voting/users/:id/contributions  # User voting and tagging history
 ```
 
 ### Research Analytics
@@ -143,10 +170,12 @@ CodeBoard/
 │   │   ├── services/
 │   │   │   ├── fastTextService.ts        # FastText integration (primary)
 │   │   │   ├── enhancedNlpService.ts     # ELD engine (fallback)
+│   │   │   ├── votingService.ts          # Community voting and tagging
 │   │   │   └── cacheService.ts           # Performance optimization
 │   │   ├── routes/                       # API endpoints
 │   │   │   ├── auth.ts                   # Authentication
 │   │   │   ├── examples.ts               # Example management
+│   │   │   ├── voting.ts                 # Community voting and quality
 │   │   │   ├── dashboard.ts              # Analytics
 │   │   │   └── admin.ts                  # Admin functions
 │   │   ├── utils/
@@ -161,7 +190,8 @@ CodeBoard/
 │   │   └── research/                    # Research tools
 │   ├── components/                     # UI components  
 │   │   ├── ui/                         # Radix UI components
-│   │   └── tagging/                    # Manual tagging interface
+│   │   ├── tagging/                    # Manual tagging interface
+│   │   └── voting/                     # Community voting panel
 │   └── lib/                           # API client and utilities
 └── README.md
 ```
@@ -190,10 +220,14 @@ CodeBoard/
 - FastText: Handles multi-script well
 - Processing: <5ms with script preservation
 
-**Community Verification**
-- Manual tagging for switch point accuracy
-- User voting for data quality assurance
-- Research-grade corpus through crowd-sourcing
+**Community Verification & Quality System**
+- **Vote Types**: Accurate/Inaccurate (language detection), Helpful/Unhelpful (research value)
+- **Confidence Scoring**: 1-5 scale for vote confidence with user comments
+- **Real-time Quality Metrics**: Automatic score calculation via database triggers
+- **Verification Status**: Pending → Community Verified → Verified → Disputed
+- **Manual Tagging**: User-contributed switch point annotations with segment details
+- **Quality Thresholds**: Score ≥70% + 3+ votes = Verified; Score ≤30% = Disputed
+- **Research-grade Corpus**: Community-verified data with transparent quality indicators
 
 ## Core Features
 
@@ -204,10 +238,12 @@ CodeBoard/
 - Consistent performance across different text types
 
 **Community Features**
-- Manual tagging interface for registered users
-- Community voting system for data quality verification
-- User-contributed switch point corrections
-- Quality scoring and verification workflows
+- **Community Voting System**: 4 vote types (Accurate, Inaccurate, Helpful, Unhelpful) with confidence scoring
+- **Manual Tagging Interface**: Interactive switch point editing for registered users
+- **Quality Verification**: Real-time quality scoring and automatic verification status updates
+- **User Contributions**: Points system for votes (1pt) and manual tags (5pts)
+- **Leaderboard System**: Community rankings based on contribution activity
+- **User-contributed Corrections**: Switch point annotations and language boundary refinement
 
 **Research Tools**
 - Role-based access (Community/Researcher/Admin tiers)
@@ -227,20 +263,23 @@ CodeBoard/
 **Community Tier**
 - Submit and explore code-switching examples
 - Basic dashboard access
-- Manual tagging of switch points
-- Vote on example accuracy
+- **Community voting** on example accuracy and helpfulness (4 vote types)
+- **Manual tagging** of language switch points with confidence scoring
+- Participate in **quality verification** and earn contribution points
 
-**Researcher Tier**
+**Researcher Tier**  
 - All Community features
-- Advanced analytics dashboard
-- Data export capabilities (CSV/JSON)
-- Research application submission
+- **Advanced analytics dashboard** with research-grade data visualization
+- **Data export capabilities** (CSV/JSON) with quality filters
+- Research application submission workflow
+- Access to **quality metrics** and verification statistics
 
 **Admin Tier**
 - All Researcher features
-- User management and application review
-- System administration tools
-- Platform configuration access
+- **User management** and research application review
+- **System administration** tools and community moderation
+- **Platform configuration** access and quality threshold management
+- **Leaderboard management** and contribution monitoring
 
 ## Contributing
 

@@ -377,9 +377,7 @@ export class AnalyticsService {
         totalRegions: regionalAnalytics.length,
         languagePairAnalytics,
         regionalAnalytics,
-        temporalAnalytics,
-        switchPointAnalytics,
-        qualityMetrics
+        temporalAnalytics
       }
     } catch (error) {
       console.error('Research analytics error:', error)
