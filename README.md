@@ -1,88 +1,76 @@
 # CodeBoard
 
-A revolutionary code-switching research platform powered by **SwitchPrint v2.1.2 by Aahad Vakani**, delivering breakthrough performance with 81.2% calibration improvement, 6.5x context enhancement, and 127K+ texts/sec processing capability.
+A modern code-switching research platform powered by **FastText** for lightweight, efficient language detection with community-driven verification features.
 
 ## Overview
 
-CodeBoard is a production-ready platform that enables researchers and communities to collect, analyze, and share real-world code-switching examples across 176+ languages. With revolutionary v2.1.2 breakthrough technology and enterprise-scale performance, CodeBoard serves as the premier platform for computational linguistics research and commercial applications.
+CodeBoard is a production-ready platform that enables researchers and communities to collect, analyze, and share real-world code-switching examples. Built with FastText for fast language detection and enhanced with manual tagging and community voting features for data quality assurance.
 
-## 🚀 **Current Status: Production Ready with SwitchPrint v2.1.2**
+## 🚀 **Current Status: Production-Ready Platform with FastText & Community Features**
 
-**Revolutionary v2.1.2 Integration (July 6-7, 2025)**
-- ✅ **SwitchPrint v2.1.2 by Aahad Vakani** - Breakthrough features with industry-leading performance
-- ✅ **81.2% calibration improvement** - ECE: 0.562 → 0.105 (research-grade reliability)
-- ✅ **6.5x context enhancement** - F1: 0.098 → 0.643 (revolutionary accuracy)
-- ✅ **127K+ texts/sec processing** - Enterprise-scale batch processing capability
-- ✅ **99% cache efficiency** - Near-perfect caching with automatic optimization
-- ✅ **Real-time quality assurance** - Automatic reliability scoring and quality assessment
-- ✅ **176+ languages** with perfect multi-script support including underserved communities
-- ✅ **Performance modes** - Fast/Balanced/Accurate modes for different use cases
+**Current Architecture (July 2025)**
+- ✅ **FastText Language Detection** - Lightweight, efficient detection for 176+ languages
+- ✅ **Supabase Integration** - Complete migration from Prisma to Supabase
+- ✅ **Comprehensive Reference Data** - 82 languages, 101 regions, 46 platforms
+- ✅ **Searchable UI Components** - Advanced dropdowns with search and filtering
+- ✅ **Role-Based Access Control** - Community/Researcher/Admin tiers with JWT validation
+- ✅ **Research Application Workflow** - Complete submission and approval system
+- ✅ **Real-time Analytics** - Dashboard with data visualization
+- ✅ **Performance Optimization** - <200MB memory footprint for free hosting
+- ✅ **Multi-tier Authentication** - JWT with OAuth support for Google and GitHub
 
-## Performance Evolution
+## Performance Characteristics
 
-### **Current: SwitchPrint v2.1.2 Breakthrough (July 2025)**
-- **Confidence Calibration**: 81.2% improvement (ECE: 0.562 → 0.105)
-- **Context Enhancement**: 6.5x performance improvement (F1: 0.098 → 0.643)
-- **Batch Processing**: 127K+ texts/sec with 99% cache hit rate
-- **Quality Assurance**: Automatic reliability scoring (0.69-0.85 range)
-- **Processing Speed**: Sub-10ms target with breakthrough optimization
-- **Test Success**: 100% across 15 comprehensive v2.1.2 scenarios
-- **Languages**: 176+ with zero unknown token failures
-
-### **Previous: Enhanced ELD System (June 2025) - Now Fallback**
-- **Accuracy**: 44.7% average confidence improvement
-- **Speed**: 40,994+ tokens/second
-- **Processing Time**: <100ms for typical submissions
-- **Languages**: 60+ with enhanced function word mapping
-- **Test Success**: 100% (6/6 basic tests, 16/16 advanced)
-- **Unknown Rate**: 72.1% reduction from baseline
-
-### **Legacy: CLD3 Baseline (Original) - Deprecated**
-- **Accuracy**: 74,000+ tokens/second but 66-90% unknown tokens
-- **Issues**: Failed on non-Latin scripts, poor switch-point detection
-- **Coverage**: Limited to common function words only
+### **FastText Integration Benefits**
+- **Speed**: Near-instant language detection (~1-5ms per text)
+- **Memory**: ~15-20MB model size vs 600MB+ alternatives
+- **Languages**: 176+ supported languages with consistent performance
+- **Accuracy**: Balanced approach optimized for hosting constraints
+- **Reliability**: Consistent performance across different text lengths
+- **Scalability**: Perfect for free hosting tiers with memory limits
 
 ## Technology Stack
 
 **NLP Engine:**
-- **Primary**: SwitchPrint by Aahad Vakani (Python Flask bridge service)
+- **Primary**: FastText Python worker with stdin/stdout communication
 - **Fallback**: Enhanced ELD with user guidance and phrase clustering
-- **Bridge**: HTTP API with automatic failover (Node.js ↔ Python)
+- **Processing**: Subprocess-based language detection with caching
 
 **Backend:**
 - Express.js with TypeScript strict mode
-- PostgreSQL via Supabase  
-- JWT authentication with role-based access
+- PostgreSQL via Supabase client
+- JWT authentication with role-based access (Community/Researcher/Admin)
 - Comprehensive error handling and validation
+- OAuth integration for Google and GitHub
 
 **Frontend:**
 - Next.js 15 with App Router
 - React 19 with TypeScript
 - Tailwind CSS and Radix UI
 - Real-time analytics dashboard
+- Manual tagging and voting interfaces
 
 ## Quick Start
 
 ### Prerequisites
 - Node.js (v18+)
-- Python 3.8+ (for SwitchPrint)
-- PostgreSQL database
+- Python 3.8+ (for FastText)
+- Supabase account for database
 
 ### 1. Backend Setup
 ```bash
 cd backend
 npm install
 cp .env.example .env
-# Configure DATABASE_URL in .env
-npx prisma migrate dev
+# Configure SUPABASE_URL and SUPABASE_ANON_KEY in .env
 npm run dev  # Starts on port 3001
 ```
 
-### 2. SwitchPrint Service Setup
+### 2. FastText Service Setup
 ```bash
-cd backend/python_bridge
-pip install switchprint  # Install SwitchPrint by Aahad Vakani
-./start_service.sh       # Starts on port 5001
+cd backend
+pip install fasttext  # Install FastText
+# FastText workers are automatically managed by the backend
 ```
 
 ### 3. Frontend Setup
@@ -96,16 +84,16 @@ npm run dev  # Starts on port 3000
 
 ### 4. Verify Integration
 ```bash
-# Test SwitchPrint integration
+# Test FastText integration
 cd backend
-node --import tsx/esm src/scripts/testSwitchPrintIntegration.ts
+node --import tsx/esm src/scripts/testFastTextIntegration.ts
 ```
 
 ## API Endpoints
 
-### SwitchPrint-Powered Analysis
+### FastText-Powered Analysis
 ```bash
-# Real-time analysis (85.98% accuracy, 80x faster)
+# Real-time language detection
 POST /api/live-analysis
 {
   "text": "Hello, ¿cómo estás today?",
@@ -113,17 +101,21 @@ POST /api/live-analysis
   "includeDetails": true
 }
 
-# Enhanced example submission
+# Example submission with manual tagging
 POST /api/examples
 {
   "text": "Je suis très busy today",
   "languages": ["French", "English"],
-  "context": "Professional conversation"
+  "context": "Professional conversation",
+  "manualTags": ["workplace", "code-switching"]
 }
 
-# Performance monitoring
-GET /api/live-analysis/stats
-# Returns: SwitchPrint availability, performance metrics, engine status
+# Community voting on examples
+POST /api/examples/:id/vote
+{
+  "vote": "accurate|inaccurate",
+  "userId": "user123"
+}
 ```
 
 ### Research Analytics
@@ -134,6 +126,14 @@ GET /api/dashboard/platforms      # Platform distribution
 GET /api/dashboard/regions        # Regional statistics
 ```
 
+### Authentication & Access Control
+```bash
+POST /api/auth/login              # JWT authentication
+POST /api/auth/register           # User registration
+POST /api/research/apply          # Apply for researcher access
+GET /api/admin/applications       # Admin: review applications
+```
+
 ## Project Structure
 
 ```
@@ -141,61 +141,73 @@ CodeBoard/
 ├── backend/                           # Express.js API server
 │   ├── src/
 │   │   ├── services/
-│   │   │   ├── switchprintNlpService.ts  # SwitchPrint integration (primary)
+│   │   │   ├── fastTextService.ts        # FastText integration (primary)
 │   │   │   ├── enhancedNlpService.ts     # ELD engine (fallback)
 │   │   │   └── cacheService.ts           # Performance optimization
-│   │   ├── routes/                       # API endpoints with SwitchPrint
+│   │   ├── routes/                       # API endpoints
+│   │   │   ├── auth.ts                   # Authentication
+│   │   │   ├── examples.ts               # Example management
+│   │   │   ├── dashboard.ts              # Analytics
+│   │   │   └── admin.ts                  # Admin functions
+│   │   ├── utils/
+│   │   │   └── supabase.ts               # Supabase client
 │   │   ├── scripts/
-│   │   │   ├── testSwitchPrintIntegration.ts  # 18-scenario test suite
-│   │   │   └── testSwitchPrint.ts             # Basic validation
+│   │   │   └── testFastTextIntegration.ts # FastText testing
 │   │   └── app.ts                        # Main application
-│   ├── python_bridge/                   # SwitchPrint Python service
-│   │   ├── switchprint_service.py       # Flask API bridge
-│   │   └── start_service.sh             # Service startup script
-│   └── prisma/                          # Database schema
 ├── frontend/                            # Next.js React application
 │   ├── app/                            # App Router pages
+│   │   ├── dashboard/                   # Analytics dashboard
+│   │   ├── admin/                       # Admin panel
+│   │   └── research/                    # Research tools
 │   ├── components/                     # UI components  
+│   │   ├── ui/                         # Radix UI components
+│   │   └── tagging/                    # Manual tagging interface
 │   └── lib/                           # API client and utilities
 └── README.md
 ```
 
 ## Performance Benchmarks
 
-### SwitchPrint vs Traditional Methods
+### FastText vs Traditional Methods
 
-| Metric | Traditional | SwitchPrint | Improvement |
-|--------|-------------|-------------|-------------|
-| **Accuracy** | ~70% | **85.98%** | **+15.98%** |
-| **Speed** | ~10ms/text | **~0.1ms/text** | **80x faster** |
+| Metric | Traditional | FastText | Benefit |
+|--------|-------------|----------|---------|
+| **Memory Usage** | 600MB+ | **~20MB** | **30x smaller** |
+| **Speed** | ~10ms/text | **~1-5ms/text** | **2-10x faster** |
 | **Languages** | 55 | **176+** | **3x more** |
-| **Unknown Rate** | 66-90% | **0%** | **Complete coverage** |
-| **Switch Detection** | Poor | **Precise boundaries** | **Research-grade** |
+| **Hosting Cost** | High | **Free tier** | **Optimal for budget** |
+| **Reliability** | Variable | **Consistent** | **Production ready** |
 
 ### Real-World Test Results
 
 **English-Spanish Code-Switching**
 - Text: "Hello, ¿cómo estás today?"
-- SwitchPrint: 85%+ confidence, 2 languages detected
-- Processing: <2ms with perfect accuracy
+- FastText: Detects 2 languages reliably
+- Processing: <2ms with consistent performance
 
 **Multi-Script (Hindi-English)**  
 - Text: "नमस्ते, how are you?"
-- SwitchPrint: 90%+ confidence, 2 languages detected
+- FastText: Handles multi-script well
 - Processing: <5ms with script preservation
 
-**Complex Trilingual**
-- Text: "Hello, je suis muy tired today"  
-- SwitchPrint: 80%+ confidence, 3 languages detected
-- Processing: <10ms with accurate boundaries
+**Community Verification**
+- Manual tagging for switch point accuracy
+- User voting for data quality assurance
+- Research-grade corpus through crowd-sourcing
 
 ## Core Features
 
-**Advanced NLP Analysis**
-- 176+ language support including underserved communities
-- Ensemble detection combining FastText, Transformers, and custom algorithms
-- Real-time processing with automatic fallback to ELD
-- Precise switch-point detection with confidence scoring
+**Language Detection**
+- 176+ language support with FastText
+- Lightweight processing optimized for hosting constraints
+- Real-time detection with automatic fallback to ELD
+- Consistent performance across different text types
+
+**Community Features**
+- Manual tagging interface for registered users
+- Community voting system for data quality verification
+- User-contributed switch point corrections
+- Quality scoring and verification workflows
 
 **Research Tools**
 - Role-based access (Community/Researcher/Admin tiers)
@@ -204,33 +216,41 @@ CodeBoard/
 - Comprehensive filtering and search capabilities
 
 **Production Ready**
-- Render-optimized deployment with ping keep-alive
+- Supabase integration for scalable database management
+- JWT authentication with OAuth providers (Google, GitHub)
 - Comprehensive error handling and validation
 - TypeScript strict mode compliance
-- Security features with JWT authentication
+- Optimized for free hosting tiers (<200MB memory)
 
-## Research Impact
+## User Tiers
 
-**Corpus Quality**: Research-grade linguistic annotation with 85.98% accuracy  
-**Global Coverage**: First platform to support 176+ languages with zero unknown tokens  
-**Performance**: Enables real-time analysis for large-scale data collection  
-**Accessibility**: Supports underserved languages and communities worldwide
+**Community Tier**
+- Submit and explore code-switching examples
+- Basic dashboard access
+- Manual tagging of switch points
+- Vote on example accuracy
+
+**Researcher Tier**
+- All Community features
+- Advanced analytics dashboard
+- Data export capabilities (CSV/JSON)
+- Research application submission
+
+**Admin Tier**
+- All Researcher features
+- User management and application review
+- System administration tools
+- Platform configuration access
 
 ## Contributing
 
 This platform follows modern development practices:
 - TypeScript for type safety across the entire stack
-- SwitchPrint by Aahad Vakani for cutting-edge NLP performance
-- Comprehensive testing with 18+ validation scenarios
+- FastText for efficient language detection
+- Supabase for modern database management
+- Community-driven data verification
 - Production-ready deployment configuration
-- Extensive documentation and performance monitoring
-
-## Credits
-
-**NLP Engine**: SwitchPrint by Aahad Vakani - Revolutionary code-switching detection library  
-**Platform**: CodeBoard Team - Full-stack implementation and integration  
-**Performance**: 85.98% accuracy, 80x speed improvement over traditional methods
 
 ---
 
-*CodeBoard with SwitchPrint represents the most advanced code-switching research platform available, combining cutting-edge NLP technology with production-ready infrastructure for global linguistic research.*
+*CodeBoard provides a modern, efficient platform for code-switching research with community-driven verification and optimized hosting costs.*

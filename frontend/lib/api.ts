@@ -209,7 +209,7 @@ export async function fetchRegionStats(): Promise<RegionStats[]> {
   return data.data || []
 }
 
-// Utility functions
+// Reference data fetching
 export async function fetchAvailableLanguages(): Promise<string[]> {
   const response = await fetch(`${API_BASE_URL}/languages`, {
     method: 'GET',
@@ -223,7 +223,7 @@ export async function fetchAvailableLanguages(): Promise<string[]> {
   }
 
   const data = await response.json()
-  return data.data || []
+  return data.data?.map((lang: any) => lang.name) || []
 }
 
 export async function fetchAvailableRegions(): Promise<string[]> {
@@ -239,7 +239,7 @@ export async function fetchAvailableRegions(): Promise<string[]> {
   }
 
   const data = await response.json()
-  return data.data || []
+  return data.data?.map((region: any) => region.name) || []
 }
 
 export async function fetchAvailablePlatforms(): Promise<string[]> {
@@ -255,7 +255,7 @@ export async function fetchAvailablePlatforms(): Promise<string[]> {
   }
 
   const data = await response.json()
-  return data.data || []
+  return data.data?.map((platform: any) => platform.name) || []
 }
 
 // Render keep-alive ping service

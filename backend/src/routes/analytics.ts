@@ -1,53 +1,14 @@
-import express, { Request, Response, NextFunction } from 'express'
+import express from 'express'
 import { z } from 'zod'
-import jwt from 'jsonwebtoken'
-import { analyticsService } from '../services/analyticsService'
-import { UserTier, UserPayload } from '../types/index'
+import { analyticsService } from '../services/analyticsService.js'
+import { UserPayload } from '../types/index.js'
+import { supabase } from '../utils/supabase.js'
+import { authenticateToken, requireResearcher } from '../middleware/auth.js'
 
 const router = express.Router()
-const JWT_SECRET = process.env.JWT_SECRET!
 
-interface AuthenticatedRequest extends Request {
+interface AuthenticatedRequest extends express.Request {
   user: UserPayload
-}
-
-const authenticateToken = (req: Request, res: Response, next: NextFunction) => {
-  const authHeader = req.headers.authorization
-  if (!authHeader?.startsWith('Bearer ')) {
-    return res.status(401).json({
-      success: false,
-      data: null,
-      message: 'No valid token provided',
-      error: 'Unauthorized'
-    })
-  }
-
-  try {
-    const token = authHeader.substring(7)
-    const decoded = jwt.verify(token, JWT_SECRET) as UserPayload
-    ;(req as AuthenticatedRequest).user = decoded
-    next()
-  } catch (error) {
-    return res.status(401).json({
-      success: false,
-      data: null,
-      message: 'Invalid token',
-      error: 'Unauthorized'
-    })
-  }
-}
-
-const requireResearcher = (req: Request, res: Response, next: NextFunction) => {
-  const authReq = req as AuthenticatedRequest
-  if (authReq.user.tier !== UserTier.RESEARCHER && authReq.user.tier !== UserTier.ADMIN) {
-    return res.status(403).json({
-      success: false,
-      data: null,
-      message: 'Researcher or admin access required',
-      error: 'Forbidden'
-    })
-  }
-  next()
 }
 
 const analyticsFiltersSchema = z.object({
@@ -154,22 +115,16 @@ router.get('/metadata', authenticateToken, requireResearcher, async (req: Reques
       analyticsService.getResearchAnalytics(authReq.user.id).then(analytics => 
         analytics.regionalAnalytics.map(region => region.region)
       ),
-      // Get available platforms (from database query)
-      import('@prisma/client').then(({ PrismaClient }) => {
-        const prisma = new PrismaClient()
-        return prisma.example.groupBy({
-          by: ['platform'],
-          where: { 
-            platform: { not: null },
-            isPublic: true 
-          }
-        }).then(results => 
-          results
-            .map(r => r.platform)
+      // Get available platforms (from Supabase)
+      supabase
+        .from('examples')
+        .select('platform')
+        .not('platform', 'is', null)
+        .then(({ data }) => 
+          [...new Set((data || []).map(r => r.platform))]
             .filter(Boolean)
             .sort()
         )
-      })
     ])
 
     res.json({

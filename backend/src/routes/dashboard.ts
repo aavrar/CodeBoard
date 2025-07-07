@@ -1,5 +1,5 @@
 import { Router, Request, Response } from 'express'
-import { ApiResponse, DashboardMetrics } from '../types/index.js'
+import { ApiResponse } from '../types/index.js'
 import { asyncHandler } from '../middleware/errorHandler.js'
 import { supabase, tables, handleSupabaseError } from '../utils/supabase.js'
 
@@ -53,19 +53,44 @@ dashboardRoutes.get('/metrics', asyncHandler(async (req: Request, res: Response)
       })
     }
 
-    const metrics: DashboardMetrics = {
+    // Count unique language pairs
+    const uniquePairs = new Set<string>()
+    if (languageData) {
+      languageData.forEach(example => {
+        if (Array.isArray(example.languages) && example.languages.length >= 2) {
+          const sortedLanguages = example.languages.sort()
+          uniquePairs.add(sortedLanguages.join('-'))
+        }
+      })
+    }
+
+    // Count unique regions for "countries" metric
+    const { data: regionData, error: regionError } = await supabase
+      .from(tables.examples)
+      .select('region')
+    
+    const uniqueRegions = new Set<string>()
+    if (!regionError && regionData) {
+      regionData.forEach(example => {
+        if (example.region) {
+          uniqueRegions.add(example.region)
+        }
+      })
+    }
+
+    const metrics = {
       totalExamples: totalExamples || 0,
-      totalUsers: totalUsers || 0,
-      verifiedExamples: verifiedExamples || 0,
-      languageDistribution,
-      recentActivity: [], // Can be populated later
-      platformStats: {
-        avgConfidence: 0, // Can be calculated later
-        topLanguagePairs: Object.keys(languageDistribution).slice(0, 5)
+      languagePairs: uniquePairs.size,
+      contributors: totalUsers || 0,
+      countries: uniqueRegions.size,
+      monthlyGrowth: {
+        examples: 12, // Mock growth data - could be calculated from recent data
+        contributors: 8,
+        languagePairs: 2
       }
     }
 
-    const response: ApiResponse<DashboardMetrics> = {
+    const response: ApiResponse<typeof metrics> = {
       success: true,
       data: metrics,
       message: 'Dashboard metrics retrieved successfully',
@@ -111,14 +136,19 @@ dashboardRoutes.get('/language-pairs', asyncHandler(async (req: Request, res: Re
       }
     })
 
-    // Calculate average confidence for each pair
-    Object.keys(languagePairs).forEach(pair => {
-      languagePairs[pair].avgConfidence = languagePairs[pair].avgConfidence / languagePairs[pair].count
-    })
+    // Calculate average confidence for each pair and format for charts
+    const formattedPairs = Object.entries(languagePairs)
+      .map(([pair, stats]) => ({
+        pair: pair.replace('-', ' - '),
+        count: stats.count,
+        avgConfidence: stats.avgConfidence / stats.count
+      }))
+      .sort((a, b) => b.count - a.count)
+      .slice(0, 5) // Top 5 pairs
 
-    const response: ApiResponse<typeof languagePairs> = {
+    const response: ApiResponse<typeof formattedPairs> = {
       success: true,
-      data: languagePairs,
+      data: formattedPairs,
       message: 'Language pairs retrieved successfully',
       error: null
     }
@@ -130,6 +160,62 @@ dashboardRoutes.get('/language-pairs', asyncHandler(async (req: Request, res: Re
       success: false,
       data: null,
       message: 'Failed to fetch language pairs',
+      error: 'Internal server error'
+    })
+  }
+}))
+
+// GET /api/dashboard/switch-points - Get switch point trends over time
+dashboardRoutes.get('/switch-points', asyncHandler(async (req: Request, res: Response) => {
+  try {
+    const { data: examples, error } = await supabase
+      .from(tables.examples)
+      .select('switch_points, created_at')
+      .order('created_at', { ascending: true })
+
+    if (error) {
+      handleSupabaseError(error, 'switch points query')
+    }
+
+    // Group by month and calculate switch point trends
+    const monthlyData: Record<string, { switches: number; count: number }> = {}
+    
+    examples?.forEach(example => {
+      const date = new Date(example.created_at)
+      const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`
+      
+      if (!monthlyData[monthKey]) {
+        monthlyData[monthKey] = { switches: 0, count: 0 }
+      }
+      
+      const switchCount = Array.isArray(example.switch_points) ? example.switch_points.length : 0
+      monthlyData[monthKey].switches += switchCount
+      monthlyData[monthKey].count++
+    })
+
+    // Format for chart (average switches per example per month)
+    const formattedData = Object.entries(monthlyData)
+      .map(([month, data]) => ({
+        month: month,
+        switches: data.count > 0 ? Math.round((data.switches / data.count) * 10) / 10 : 0
+      }))
+      .sort((a, b) => a.month.localeCompare(b.month))
+      .slice(-6) // Last 6 months
+
+    const response: ApiResponse<typeof formattedData> = {
+      success: true,
+      data: formattedData,
+      message: 'Switch point data retrieved successfully',
+      error: null
+    }
+
+    res.json(response)
+  } catch (error) {
+    console.error('Switch points error:', error)
+    res.status(500).json({
+      success: false,
+      data: null,
+      message: 'Failed to fetch switch points data',
       error: 'Internal server error'
     })
   }
@@ -153,9 +239,18 @@ dashboardRoutes.get('/regions', asyncHandler(async (req: Request, res: Response)
       regionDistribution[region] = (regionDistribution[region] || 0) + 1
     })
 
-    const response: ApiResponse<typeof regionDistribution> = {
+    // Format for chart
+    const formattedRegions = Object.entries(regionDistribution)
+      .map(([region, count]) => ({
+        region,
+        count
+      }))
+      .sort((a, b) => b.count - a.count)
+      .slice(0, 8) // Top 8 regions
+
+    const response: ApiResponse<typeof formattedRegions> = {
       success: true,
-      data: regionDistribution,
+      data: formattedRegions,
       message: 'Regional distribution retrieved successfully',
       error: null
     }
@@ -190,9 +285,19 @@ dashboardRoutes.get('/platforms', asyncHandler(async (req: Request, res: Respons
       platformDistribution[platform] = (platformDistribution[platform] || 0) + 1
     })
 
-    const response: ApiResponse<typeof platformDistribution> = {
+    // Format for pie chart with colors
+    const colors = ['#0891b2', '#06b6d4', '#67e8f9', '#a5f3fc', '#cffafe', '#f0fdff']
+    const formattedPlatforms = Object.entries(platformDistribution)
+      .map(([platform, count], index) => ({
+        platform,
+        count,
+        fill: colors[index % colors.length]
+      }))
+      .sort((a, b) => b.count - a.count)
+
+    const response: ApiResponse<typeof formattedPlatforms> = {
       success: true,
-      data: platformDistribution,
+      data: formattedPlatforms,
       message: 'Platform distribution retrieved successfully',
       error: null
     }

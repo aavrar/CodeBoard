@@ -84,45 +84,17 @@ export default function AdminDashboard() {
   const loadApplications = async () => {
     try {
       const token = localStorage.getItem('authToken')
-      // TODO: Implement actual API call
-      // const response = await api.get('/admin/applications', {
-      //   headers: { Authorization: `Bearer ${token}` }
-      // })
+      const response = await api.get('/admin/applications', {
+        headers: { Authorization: `Bearer ${token}` }
+      })
       
-      // Mock data for now
-      const mockApplications: ResearchApplication[] = [
-        {
-          id: '1',
-          userId: 'user1',
-          user: {
-            name: 'Dr. Sarah Johnson',
-            email: 'sarah.johnson@university.edu',
-            displayName: 'Sarah J.'
-          },
-          requestedTools: ['Advanced Analytics', 'Data Export', 'Collaboration Tools'],
-          reason: 'I am conducting research on code-switching patterns in multilingual communities for my PhD dissertation.',
-          status: 'PENDING',
-          createdAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString()
-        },
-        {
-          id: '2',
-          userId: 'user2',
-          user: {
-            name: 'Prof. Michael Chen',
-            email: 'mchen@researchinstitute.org',
-          },
-          requestedTools: ['Advanced Analytics', 'Data Export'],
-          reason: 'Research on linguistic diversity in tech communities.',
-          status: 'APPROVED',
-          createdAt: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString(),
-          reviewedAt: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString(),
-          adminNotes: 'Verified institutional affiliation. Granted access.'
-        }
-      ]
-      
-      setApplications(mockApplications)
+      if (response.data.success) {
+        setApplications(response.data.data)
+      } else {
+        setError(response.data.message || 'Failed to load applications')
+      }
     } catch (err: any) {
-      setError('Failed to load applications')
+      setError(err.response?.data?.message || 'Failed to load applications')
     } finally {
       setLoadingApplications(false)
     }
@@ -131,26 +103,17 @@ export default function AdminDashboard() {
   const loadStats = async () => {
     try {
       const token = localStorage.getItem('authToken')
-      // TODO: Implement actual API call
-      // const response = await api.get('/admin/stats', {
-      //   headers: { Authorization: `Bearer ${token}` }
-      // })
+      const response = await api.get('/admin/stats', {
+        headers: { Authorization: `Bearer ${token}` }
+      })
       
-      // Mock data for now
-      const mockStats: AdminStats = {
-        totalUsers: 1247,
-        communityUsers: 1089,
-        researcherUsers: 156,
-        adminUsers: 2,
-        pendingApplications: 3,
-        totalExamples: 5621,
-        verifiedExamples: 4892,
-        systemHealth: 'healthy'
+      if (response.data.success) {
+        setStats(response.data.data)
+      } else {
+        setError(response.data.message || 'Failed to load statistics')
       }
-      
-      setStats(mockStats)
     } catch (err: any) {
-      setError('Failed to load statistics')
+      setError(err.response?.data?.message || 'Failed to load statistics')
     } finally {
       setLoadingStats(false)
     }
@@ -159,28 +122,31 @@ export default function AdminDashboard() {
   const handleApplicationAction = async (applicationId: string, action: 'approve' | 'reject', notes?: string) => {
     try {
       const token = localStorage.getItem('authToken')
-      // TODO: Implement actual API call
-      // const response = await api.post(`/admin/applications/${applicationId}/${action}`, 
-      //   { notes },
-      //   { headers: { Authorization: `Bearer ${token}` } }
-      // )
+      const response = await api.post(`/admin/applications/${applicationId}/${action}`, 
+        { notes },
+        { headers: { Authorization: `Bearer ${token}` } }
+      )
       
-      // Mock update for now
-      setApplications(prev => prev.map(app => 
-        app.id === applicationId 
-          ? { 
-              ...app, 
-              status: action === 'approve' ? 'APPROVED' : 'REJECTED',
-              reviewedAt: new Date().toISOString(),
-              adminNotes: notes
-            }
-          : app
-      ))
-      
-      setSuccess(`Application ${action}ed successfully`)
-      setTimeout(() => setSuccess(''), 3000)
+      if (response.data.success) {
+        // Update local state
+        setApplications(prev => prev.map(app => 
+          app.id === applicationId 
+            ? { 
+                ...app, 
+                status: action === 'approve' ? 'APPROVED' : 'REJECTED',
+                reviewedAt: new Date().toISOString(),
+                adminNotes: notes
+              }
+            : app
+        ))
+        
+        setSuccess(`Application ${action}d successfully`)
+        setTimeout(() => setSuccess(''), 3000)
+      } else {
+        setError(response.data.message || `Failed to ${action} application`)
+      }
     } catch (err: any) {
-      setError(`Failed to ${action} application`)
+      setError(err.response?.data?.message || `Failed to ${action} application`)
     }
   }
 

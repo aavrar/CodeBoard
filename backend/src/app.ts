@@ -13,7 +13,9 @@ import liveAnalysisRoutes from './routes/liveAnalysis.js'
 import { exampleRoutes } from './routes/examples.js'
 import { dashboardRoutes } from './routes/dashboard.js'
 import { referenceRoutes } from './routes/reference.js'
+import adminRoutes from './routes/admin.js'
 import { nlpCache } from './services/cacheService.js'
+import { fastTextService } from './services/fastTextService.js'
 
 // Load environment variables
 dotenv.config()
@@ -128,6 +130,7 @@ app.use('/api/live-analysis', liveAnalysisRoutes)
 app.use('/api/examples', exampleRoutes)
 app.use('/api/dashboard', dashboardRoutes)
 app.use('/api', referenceRoutes)
+app.use('/api/admin', adminRoutes)
 
 // 404 handler
 app.use('*', (req, res) => {
@@ -142,11 +145,25 @@ app.use('*', (req, res) => {
 // Error handling middleware (must be last)
 app.use(errorHandler)
 
+// Initialize FastText service
+async function initializeServices() {
+  console.log('🔤 Initializing FastText service...')
+  const fastTextReady = await fastTextService.initialize()
+  if (fastTextReady) {
+    console.log('✅ FastText service ready')
+  } else {
+    console.log('⚠️ FastText service failed to initialize, will use ELD fallback')
+  }
+}
+
 // Start server
-app.listen(PORT, () => {
+app.listen(PORT, async () => {
   console.log(`🚀 Server running on port ${PORT}`)
   console.log(`📊 Environment: ${process.env.NODE_ENV || 'development'}`)
   console.log(`🌐 CORS enabled for: ${process.env.FRONTEND_URL || 'http://localhost:3000'}`)
+  
+  // Initialize services after server starts
+  await initializeServices()
 })
 
 export default app

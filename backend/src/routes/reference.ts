@@ -26,14 +26,21 @@ referenceRoutes.get('/languages', asyncHandler(async (req: Request, res: Respons
 
   // If no languages in database, return a default set
   const languageList = languages.length > 0 
-    ? languages.map(lang => lang.name)
+    ? languages
     : [
-        'English', 'Spanish', 'Hindi', 'Mandarin', 'French', 'Arabic', 
-        'Portuguese', 'Russian', 'Japanese', 'German', 'Korean', 'Italian',
-        'Dutch', 'Swedish', 'Norwegian', 'Tagalog', 'Urdu', 'Bengali'
+        { id: '1', name: 'English', code: 'en' },
+        { id: '2', name: 'Spanish', code: 'es' },
+        { id: '3', name: 'Hindi', code: 'hi' },
+        { id: '4', name: 'Chinese (Mandarin)', code: 'zh-cn' },
+        { id: '5', name: 'French', code: 'fr' },
+        { id: '6', name: 'Arabic', code: 'ar' },
+        { id: '7', name: 'Portuguese', code: 'pt' },
+        { id: '8', name: 'Russian', code: 'ru' },
+        { id: '9', name: 'Japanese', code: 'ja' },
+        { id: '10', name: 'German', code: 'de' }
       ]
 
-  const response: ApiResponse<string[]> = {
+  const response: ApiResponse<any[]> = {
     success: true,
     data: languageList,
     message: 'Languages retrieved successfully',
@@ -65,14 +72,21 @@ referenceRoutes.get('/regions', asyncHandler(async (req: Request, res: Response)
 
   // If no regions in database, return a default set
   const regionList = regions.length > 0
-    ? regions.map(region => `${region.name}, ${region.country}`)
+    ? regions
     : [
-        'North America', 'South America', 'Europe', 'East Asia', 
-        'South Asia', 'Southeast Asia', 'Middle East', 'Africa', 
-        'Oceania', 'Others'
+        { id: '1', name: 'North America', country: 'Multiple Countries' },
+        { id: '2', name: 'South America', country: 'Multiple Countries' },
+        { id: '3', name: 'Europe', country: 'Multiple Countries' },
+        { id: '4', name: 'East Asia', country: 'Multiple Countries' },
+        { id: '5', name: 'South Asia', country: 'Multiple Countries' },
+        { id: '6', name: 'Southeast Asia', country: 'Multiple Countries' },
+        { id: '7', name: 'Middle East', country: 'Multiple Countries' },
+        { id: '8', name: 'Africa', country: 'Multiple Countries' },
+        { id: '9', name: 'Oceania', country: 'Multiple Countries' },
+        { id: '10', name: 'Others', country: 'Global' }
       ]
 
-  const response: ApiResponse<string[]> = {
+  const response: ApiResponse<any[]> = {
     success: true,
     data: regionList,
     message: 'Regions retrieved successfully',
@@ -104,14 +118,21 @@ referenceRoutes.get('/platforms', asyncHandler(async (req: Request, res: Respons
 
   // If no platforms in database, return a default set
   const platformList = platforms.length > 0
-    ? platforms.map(platform => platform.name)
+    ? platforms
     : [
-        'Social Media', 'Text/Messaging', 'Face-to-face', 'Email', 
-        'Phone Call', 'Video Call', 'Online Forum', 'Chat App',
-        'Professional Meeting', 'Casual Conversation'
+        { id: '1', name: 'Twitter/X', description: 'Microblogging and social networking' },
+        { id: '2', name: 'WhatsApp', description: 'Instant messaging' },
+        { id: '3', name: 'Facebook', description: 'Social networking platform' },
+        { id: '4', name: 'Instagram', description: 'Photo and video sharing' },
+        { id: '5', name: 'TikTok', description: 'Short-form video platform' },
+        { id: '6', name: 'SMS/Text', description: 'Traditional text messaging' },
+        { id: '7', name: 'Email', description: 'Electronic mail' },
+        { id: '8', name: 'Face-to-face', description: 'In-person conversation' },
+        { id: '9', name: 'Phone Call', description: 'Voice conversation' },
+        { id: '10', name: 'Other', description: 'Other platforms' }
       ]
 
-  const response: ApiResponse<string[]> = {
+  const response: ApiResponse<any[]> = {
     success: true,
     data: platformList,
     message: 'Platforms retrieved successfully',

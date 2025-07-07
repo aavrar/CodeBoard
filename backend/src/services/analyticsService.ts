@@ -297,6 +297,284 @@ export class AnalyticsService {
     }
   }
 
+  async getResearchAnalytics(userId: string, filters?: {
+    languages?: string[]
+    regions?: string[]
+    dateRange?: { start: Date; end: Date }
+    minConfidence?: number
+  }): Promise<{
+    totalExamples: number
+    verifiedExamples: number
+    totalLanguagePairs: number
+    totalContributors: number
+    totalRegions: number
+    languagePairAnalytics: Array<{
+      pair: string
+      count: number
+      averageConfidence: number
+      averageSwitchPoints: number
+    }>
+    regionalAnalytics: Array<{
+      region: string
+      count: number
+      averageConfidence: number
+      languagePairs: string[]
+    }>
+    temporalAnalytics: Array<{
+      period: string
+      count: number
+      averageConfidence: number
+      newContributors: number
+    }>
+  }> {
+    try {
+      // Build query with filters
+      let query = supabase
+        .from(tables.examples)
+        .select('*')
+
+      // Apply filters
+      if (filters?.languages && filters.languages.length > 0) {
+        query = query.overlaps('languages', filters.languages)
+      }
+
+      if (filters?.regions && filters.regions.length > 0) {
+        query = query.in('region', filters.regions)
+      }
+
+      if (filters?.dateRange) {
+        query = query
+          .gte('created_at', filters.dateRange.start.toISOString())
+          .lte('created_at', filters.dateRange.end.toISOString())
+      }
+
+      if (filters?.minConfidence !== undefined) {
+        query = query.gte('confidence', filters.minConfidence)
+      }
+
+      const { data: examples, error } = await query
+
+      if (error) {
+        handleSupabaseError(error, 'research analytics')
+      }
+
+      const filteredExamples = examples || []
+
+      // Calculate analytics
+      const languagePairAnalytics = this.calculateLanguagePairAnalytics(filteredExamples)
+      const regionalAnalytics = this.calculateRegionalAnalytics(filteredExamples)
+      const temporalAnalytics = this.calculateTemporalAnalytics(filteredExamples)
+
+      // Calculate additional analytics for frontend
+      const switchPointAnalytics = this.calculateSwitchPointAnalytics(filteredExamples)
+      const qualityMetrics = this.calculateQualityMetrics(filteredExamples)
+
+      return {
+        totalExamples: filteredExamples.length,
+        verifiedExamples: filteredExamples.filter(e => e.is_verified).length,
+        totalLanguagePairs: languagePairAnalytics.length,
+        totalContributors: new Set(filteredExamples.map(e => e.user_id).filter(Boolean)).size,
+        totalRegions: regionalAnalytics.length,
+        languagePairAnalytics,
+        regionalAnalytics,
+        temporalAnalytics,
+        switchPointAnalytics,
+        qualityMetrics
+      }
+    } catch (error) {
+      console.error('Research analytics error:', error)
+      throw new Error('Failed to get research analytics')
+    }
+  }
+
+  async getLanguagePairDetails(userId: string, languagePair: string, limit: number = 50): Promise<any[]> {
+    try {
+      const languages = languagePair.split(' - ')
+      
+      const { data: examples, error } = await supabase
+        .from(tables.examples)
+        .select('*')
+        .overlaps('languages', languages)
+        .limit(limit)
+        .order('created_at', { ascending: false })
+
+      if (error) {
+        handleSupabaseError(error, 'language pair details')
+      }
+
+      return examples || []
+    } catch (error) {
+      console.error('Language pair details error:', error)
+      throw new Error('Failed to get language pair details')
+    }
+  }
+
+  private calculateLanguagePairAnalytics(examples: any[]): Array<{
+    pair: string
+    count: number
+    averageConfidence: number
+    averageSwitchPoints: number
+  }> {
+    const pairStats: Record<string, { count: number; totalConfidence: number; totalSwitchPoints: number }> = {}
+
+    examples.forEach(example => {
+      if (example.languages && example.languages.length >= 2) {
+        const pair = example.languages.sort().join(' - ')
+        if (!pairStats[pair]) {
+          pairStats[pair] = { count: 0, totalConfidence: 0, totalSwitchPoints: 0 }
+        }
+        pairStats[pair].count++
+        pairStats[pair].totalConfidence += example.confidence || 0
+        pairStats[pair].totalSwitchPoints += (example.switch_points || []).length
+      }
+    })
+
+    return Object.entries(pairStats)
+      .map(([pair, stats]) => ({
+        pair,
+        count: stats.count,
+        averageConfidence: stats.count > 0 ? stats.totalConfidence / stats.count : 0,
+        averageSwitchPoints: stats.count > 0 ? stats.totalSwitchPoints / stats.count : 0
+      }))
+      .sort((a, b) => b.count - a.count)
+  }
+
+  private calculateRegionalAnalytics(examples: any[]): Array<{
+    region: string
+    count: number
+    averageConfidence: number
+    languagePairs: string[]
+  }> {
+    const regionStats: Record<string, { 
+      count: number
+      totalConfidence: number
+      languagePairs: Set<string>
+    }> = {}
+
+    examples.forEach(example => {
+      const region = example.region || 'Unknown'
+      if (!regionStats[region]) {
+        regionStats[region] = { count: 0, totalConfidence: 0, languagePairs: new Set() }
+      }
+      regionStats[region].count++
+      regionStats[region].totalConfidence += example.confidence || 0
+      
+      if (example.languages && example.languages.length >= 2) {
+        const pair = example.languages.sort().join(' - ')
+        regionStats[region].languagePairs.add(pair)
+      }
+    })
+
+    return Object.entries(regionStats)
+      .map(([region, stats]) => ({
+        region,
+        count: stats.count,
+        averageConfidence: stats.count > 0 ? stats.totalConfidence / stats.count : 0,
+        languagePairs: Array.from(stats.languagePairs)
+      }))
+      .sort((a, b) => b.count - a.count)
+  }
+
+  private calculateTemporalAnalytics(examples: any[]): Array<{
+    period: string
+    count: number
+    averageConfidence: number
+    newContributors: number
+  }> {
+    const periodStats: Record<string, {
+      count: number
+      totalConfidence: number
+      contributors: Set<string>
+    }> = {}
+
+    examples.forEach(example => {
+      const date = new Date(example.created_at)
+      const period = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`
+      
+      if (!periodStats[period]) {
+        periodStats[period] = { count: 0, totalConfidence: 0, contributors: new Set() }
+      }
+      periodStats[period].count++
+      periodStats[period].totalConfidence += example.confidence || 0
+      
+      if (example.user_id) {
+        periodStats[period].contributors.add(example.user_id)
+      }
+    })
+
+    return Object.entries(periodStats)
+      .map(([period, stats]) => ({
+        period,
+        count: stats.count,
+        averageConfidence: stats.count > 0 ? stats.totalConfidence / stats.count : 0,
+        newContributors: stats.contributors.size
+      }))
+      .sort((a, b) => b.period.localeCompare(a.period))
+  }
+
+  private calculateSwitchPointAnalytics(examples: any[]): Array<{
+    range: string
+    count: number
+    percentage: number
+  }> {
+    const switchPointCounts: Record<string, number> = {
+      '0': 0,
+      '1-2': 0,
+      '3-5': 0,
+      '6-10': 0,
+      '10+': 0
+    }
+
+    examples.forEach(example => {
+      const switchPoints = (example.switch_points || []).length
+      if (switchPoints === 0) {
+        switchPointCounts['0']++
+      } else if (switchPoints <= 2) {
+        switchPointCounts['1-2']++
+      } else if (switchPoints <= 5) {
+        switchPointCounts['3-5']++
+      } else if (switchPoints <= 10) {
+        switchPointCounts['6-10']++
+      } else {
+        switchPointCounts['10+']++
+      }
+    })
+
+    const total = examples.length
+    return Object.entries(switchPointCounts)
+      .map(([range, count]) => ({
+        range,
+        count,
+        percentage: total > 0 ? (count / total) * 100 : 0
+      }))
+      .filter(item => item.count > 0)
+  }
+
+  private calculateQualityMetrics(examples: any[]): {
+    averageConfidence: number
+    verificationRate: number
+    userLanguageMatchRate: number
+  } {
+    const totalExamples = examples.length
+    if (totalExamples === 0) {
+      return {
+        averageConfidence: 0,
+        verificationRate: 0,
+        userLanguageMatchRate: 0
+      }
+    }
+
+    const totalConfidence = examples.reduce((sum, example) => sum + (example.confidence || 0), 0)
+    const verifiedCount = examples.filter(e => e.is_verified).length
+    const userLanguageMatchCount = examples.filter(e => e.user_language_match).length
+
+    return {
+      averageConfidence: totalConfidence / totalExamples,
+      verificationRate: (verifiedCount / totalExamples) * 100,
+      userLanguageMatchRate: (userLanguageMatchCount / totalExamples) * 100
+    }
+  }
+
   private convertToCSV(data: any[]): string {
     if (data.length === 0) return ''
 

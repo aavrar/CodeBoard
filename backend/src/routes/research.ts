@@ -1,52 +1,13 @@
-import express, { Request, Response, NextFunction } from 'express'
+import express from 'express'
 import { z } from 'zod'
-import jwt from 'jsonwebtoken'
-import { researchApplicationService } from '../services/researchApplicationService'
-import { ApplicationStatus, UserTier, UserPayload, researchApplicationSchema } from '../types/index'
+import { researchApplicationService } from '../services/researchApplicationService.js'
+import { ApplicationStatus, UserTier, UserPayload, researchApplicationSchema } from '../types/index.js'
+import { authenticateToken, requireAdmin, requireOwnershipOrAdmin } from '../middleware/auth.js'
 
 const router = express.Router()
-const JWT_SECRET = process.env.JWT_SECRET!
 
-interface AuthenticatedRequest extends Request {
+interface AuthenticatedRequest extends express.Request {
   user: UserPayload
-}
-
-const authenticateToken = (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
-  const authHeader = req.headers.authorization
-  if (!authHeader?.startsWith('Bearer ')) {
-    return res.status(401).json({
-      success: false,
-      data: null,
-      message: 'No valid token provided',
-      error: 'Unauthorized'
-    })
-  }
-
-  try {
-    const token = authHeader.substring(7)
-    const decoded = jwt.verify(token, JWT_SECRET) as UserPayload
-    req.user = decoded
-    next()
-  } catch (error) {
-    return res.status(401).json({
-      success: false,
-      data: null,
-      message: 'Invalid token',
-      error: 'Unauthorized'
-    })
-  }
-}
-
-const requireAdmin = (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
-  if (req.user.tier !== UserTier.ADMIN) {
-    return res.status(403).json({
-      success: false,
-      data: null,
-      message: 'Admin access required',
-      error: 'Forbidden'
-    })
-  }
-  next()
 }
 
 router.post('/applications', authenticateToken, async (req: AuthenticatedRequest, res: Response) => {

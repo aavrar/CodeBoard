@@ -5,7 +5,7 @@ import { ApiResponse, exampleSubmissionSchema } from '../types/index.js';
 import { asyncHandler } from '../middleware/errorHandler.js';
 import { analyzeSentence } from '../services/nlpService.js'; // Import the NLP service
 import { analyzeWithUserGuidance } from '../services/enhancedNlpService.js'; // Enhanced NLP service
-import { analyzeWithSwitchPrint } from '../services/switchprintNlpService.js'; // SwitchPrint service
+import { fastTextService } from '../services/fastTextService.js'; // FastText service
 export const exampleRoutes = Router();
 
 const getExamplesSchema = z.object({
@@ -92,21 +92,18 @@ exampleRoutes.get('/', asyncHandler(async (req: Request, res: Response) => {
   try {
     // Try database first
     const [dbExamples, total] = await Promise.all([
-      prisma.example.findMany({
-        skip: (pageNum - 1) * limitNum,
-        take: limitNum,
-        orderBy: { createdAt: 'desc' },
-        include: {
-          user: {
-            select: { id: true, name: true }
-          }
-        }
-      }),
-      prisma.example.count()
+      supabase
+        .from(tables.examples)
+        .select('*')
+        .range((pageNum - 1) * limitNum, pageNum * limitNum - 1)
+        .order('created_at', { ascending: false }),
+      supabase
+        .from(tables.examples)
+        .select('*', { count: 'exact', head: true })
     ]);
     
-    if (dbExamples.length > 0) {
-      examples = dbExamples.map(example => ({
+    if (dbExamples.data && dbExamples.data.length > 0) {
+      examples = dbExamples.data.map((example: any) => ({
         id: example.id,
         text: example.text,
         languages: example.languages,
@@ -114,9 +111,9 @@ exampleRoutes.get('/', asyncHandler(async (req: Request, res: Response) => {
         region: example.region || '',
         platform: example.platform || '',
         age: example.age || '',
-        timestamp: example.createdAt.toISOString(),
-        contributorId: example.userId as any,
-        isVerified: example.isVerified
+        timestamp: example.created_at,
+        contributorId: example.user_id,
+        isVerified: example.is_verified || false
       }));
     }
   } catch (error) {
@@ -172,31 +169,27 @@ exampleRoutes.post('/', asyncHandler(async (req: Request, res: Response) => {
   // Validate input data
   const validatedData = exampleSubmissionSchema.parse(req.body)
   
-  // Perform enhanced NLP analysis with SwitchPrint v2.1.2 (breakthrough features)
+  // Perform enhanced NLP analysis with FastText (lightweight)
   let enhancedResult;
-  let usedSwitchPrint = false;
-  const performanceMode = req.body.performanceMode || 'balanced'; // v2.1.2 parameter
+  let usedFastText = false;
+  const performanceMode = req.body.performanceMode || 'balanced';
   
   try {
-    enhancedResult = await analyzeWithSwitchPrint(
+    enhancedResult = await fastTextService.detectLanguage(
       validatedData.text, 
-      validatedData.languages, 
-      false, // fastMode (legacy)
-      performanceMode // v2.1.2 performance mode
+      validatedData.languages
     );
-    usedSwitchPrint = true;
-    console.log(`✅ Using SwitchPrint v2.1.2 for analysis (mode: ${performanceMode})`);
+    usedFastText = true;
+    console.log(`✅ Using FastText for analysis (mode: ${performanceMode})`);
   } catch (error) {
-    console.warn('SwitchPrint v2.1.2 failed, falling back to ELD:', error);
+    console.warn('FastText failed, falling back to ELD:', error);
     enhancedResult = analyzeWithUserGuidance(validatedData.text, validatedData.languages);
-    usedSwitchPrint = false;
+    usedFastText = false;
   }
   
   const { 
     tokens, switchPoints, phrases, confidence, userLanguageMatch, detectedLanguages,
-    // v2.1.2 breakthrough features
-    calibratedConfidence, reliabilityScore, qualityAssessment, calibrationMethod,
-    contextOptimization, performanceMode: resultPerformanceMode, version, processingTimeMs
+    processing
   } = enhancedResult;
 
   let newExample: any = { // Use any for now, will refine type after schema update
@@ -214,16 +207,10 @@ exampleRoutes.post('/', asyncHandler(async (req: Request, res: Response) => {
     userLanguageMatch: userLanguageMatch, // Whether detected languages match user input
     detectedLanguages: detectedLanguages, // AI-detected languages
     
-    // v2.1.2 breakthrough features
-    calibratedConfidence: calibratedConfidence || confidence,
-    reliabilityScore: reliabilityScore || 0,
-    qualityAssessment: qualityAssessment || 'unknown',
-    calibrationMethod: calibrationMethod || 'none',
-    contextOptimization: contextOptimization,
-    performanceMode: resultPerformanceMode || performanceMode,
-    analysisVersion: version || '2.1.2',
-    processingTimeMs: processingTimeMs || 0,
-    usedSwitchPrint: usedSwitchPrint,
+    // FastText processing features
+    processingTimeMs: processing?.timeMs || 0,
+    engine: processing?.engine || (usedFastText ? 'FastText' : 'ELD'),
+    usedFastText: usedFastText,
     
     timestamp: new Date().toISOString(),
     contributorId: null,
@@ -235,7 +222,9 @@ exampleRoutes.post('/', asyncHandler(async (req: Request, res: Response) => {
   
   try {
     // Try to create in database first
-    const dbExample = await prisma.example.create({
+    const { data: dbExample, error } = await supabase
+      .from(tables.examples)
+      .insert({
       data: {
         text: validatedData.text,
         languages: validatedData.languages,
@@ -373,7 +362,9 @@ exampleRoutes.post('/enhanced', asyncHandler(async (req: Request, res: Response)
 
     try {
       // Try to save to database
-      const dbExample = await prisma.example.create({
+      const { data: dbExample, error } = await supabase
+      .from(tables.examples)
+      .insert({
         data: {
           text: validatedData.text,
           languages: validatedData.languages,

@@ -13,14 +13,15 @@ import { useState, useEffect } from "react"
 import { Plus, X, Send, HelpCircle, Zap } from "lucide-react"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 import { useToast } from "@/hooks/use-toast"
-import { submitExample, fetchAvailableLanguages } from "@/lib/api"
+import { submitExample } from "@/lib/api"
 import { EnhancedSubmissionModal } from "@/components/enhanced-submission-modal"
 import { ClientOnly } from "@/components/client-only"
+import { SearchableSelect } from "@/components/ui/searchable-select"
+import { useReferenceData } from "@/hooks/use-reference-data"
 import type { SubmissionData } from "@/types"
 
 export default function SubmitPage() {
   const [languages, setLanguages] = useState<string[]>([])
-  const [newLanguage, setNewLanguage] = useState("")
   const [example, setExample] = useState("")
   const [context, setContext] = useState("")
   const [age, setAge] = useState("")
@@ -28,9 +29,8 @@ export default function SubmitPage() {
   const [platform, setPlatform] = useState("")
   const [isSubmitting, setIsSubmitting] = useState(false)
 
-  const [availableLanguages, setAvailableLanguages] = useState<string[]>([])
-  const [isLoadingLanguages, setIsLoadingLanguages] = useState(true)
   const { toast } = useToast()
+  const { languageOptions, regionOptions, platformOptions, loading: referenceLoading } = useReferenceData()
 
   const fallbackLanguages = [
     "English",
@@ -184,45 +184,18 @@ export default function SubmitPage() {
                       </TooltipProvider>
                     </Label>
 
-                    <div className="flex gap-2">
-                      <Select value={newLanguage} onValueChange={setNewLanguage} disabled={isLoadingLanguages}>
-                        <SelectTrigger className="flex-1">
-                          <SelectValue placeholder={isLoadingLanguages ? "Loading languages..." : "Select a language"} />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {availableLanguages.map((lang) => (
-                            <SelectItem key={lang} value={lang}>
-                              {lang}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      <Button
-                        type="button"
-                        onClick={addLanguage}
-                        disabled={!newLanguage || languages.includes(newLanguage)}
-                        size="icon"
-                      >
-                        <Plus className="h-4 w-4" />
-                      </Button>
-                    </div>
-
-                    {languages.length > 0 && (
-                      <div className="flex flex-wrap gap-2">
-                        {languages.map((lang) => (
-                          <Badge key={lang} variant="secondary" className="flex items-center gap-1">
-                            {lang}
-                            <button
-                              type="button"
-                              onClick={() => removeLanguage(lang)}
-                              className="ml-1 hover:bg-neutral-300 rounded-full p-0.5"
-                            >
-                              <X className="h-3 w-3" />
-                            </button>
-                          </Badge>
-                        ))}
-                      </div>
-                    )}
+                    <SearchableSelect
+                      options={languageOptions}
+                      value={languages}
+                      onValueChange={setLanguages}
+                      placeholder={referenceLoading ? "Loading languages..." : "Search and select languages..."}
+                      searchPlaceholder="Search languages..."
+                      emptyMessage="No languages found"
+                      multiple={true}
+                      maxSelections={5}
+                      disabled={referenceLoading}
+                      className="w-full"
+                    />
                   </div>
 
                   <div className="space-y-2">
@@ -262,11 +235,16 @@ export default function SubmitPage() {
                       <Label htmlFor="region" className="text-sm font-medium">
                         Region (Optional)
                       </Label>
-                      <Input
-                        id="region"
-                        placeholder="e.g., California, Mumbai"
-                        value={region}
-                        onChange={(e) => setRegion(e.target.value)}
+                      <SearchableSelect
+                        options={regionOptions}
+                        value={region ? [region] : []}
+                        onValueChange={(values) => setRegion(values[0] || "")}
+                        placeholder={referenceLoading ? "Loading regions..." : "Search and select region..."}
+                        searchPlaceholder="Search regions..."
+                        emptyMessage="No regions found"
+                        multiple={false}
+                        disabled={referenceLoading}
+                        className="w-full"
                       />
                     </div>
 
@@ -274,19 +252,17 @@ export default function SubmitPage() {
                       <Label htmlFor="platform" className="text-sm font-medium">
                         Platform (Optional)
                       </Label>
-                      <Select value={platform} onValueChange={setPlatform}>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select platform" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="conversation">Face-to-face</SelectItem>
-                          <SelectItem value="social-media">Social Media</SelectItem>
-                          <SelectItem value="messaging">Text/Messaging</SelectItem>
-                          <SelectItem value="email">Email</SelectItem>
-                          <SelectItem value="phone">Phone Call</SelectItem>
-                          <SelectItem value="other">Other</SelectItem>
-                        </SelectContent>
-                      </Select>
+                      <SearchableSelect
+                        options={platformOptions}
+                        value={platform ? [platform] : []}
+                        onValueChange={(values) => setPlatform(values[0] || "")}
+                        placeholder={referenceLoading ? "Loading platforms..." : "Search and select platform..."}
+                        searchPlaceholder="Search platforms..."
+                        emptyMessage="No platforms found"
+                        multiple={false}
+                        disabled={referenceLoading}
+                        className="w-full"
+                      />
                     </div>
                   </div>
 
