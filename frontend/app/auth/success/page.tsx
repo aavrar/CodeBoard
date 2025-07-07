@@ -1,11 +1,11 @@
 "use client"
 
-import { useEffect, useCallback } from 'react'
+import { useEffect, useCallback, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { useAuth } from '@/contexts/auth-context'
 import { useToast } from '@/hooks/use-toast'
 
-export default function AuthSuccessPage() {
+function AuthSuccessContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const { refreshUser } = useAuth()
@@ -61,5 +61,13 @@ export default function AuthSuccessPage() {
         </div>
       </div>
     </div>
+  )
+}
+
+export default function AuthSuccessPage() {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <AuthSuccessContent />
+    </Suspense>
   )
 }

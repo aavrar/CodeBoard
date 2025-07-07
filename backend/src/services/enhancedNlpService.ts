@@ -82,13 +82,13 @@ const FUNCTION_WORD_MAPPING: Record<string, string> = {
   
   // Spanish
   'el': 'es', 'la': 'es', 'los': 'es', 'las': 'es', 'y': 'es', 'pero': 'es', 'es': 'es',
-  'una': 'es', 'del': 'es', 'con': 'es', 'por': 'es', 'para': 'es',
+  'una': 'es', 'del_es': 'es', 'con': 'es', 'por': 'es', 'para': 'es',
   'yo': 'es', 'tú': 'es', 'él': 'es', 'ella': 'es', 'nosotros': 'es', 'ellos': 'es', 'ellas': 'es',
   
   // French  
   'le': 'fr', 'les': 'fr', 'et': 'fr', 'ou': 'fr', 'mais': 'fr', 'est': 'fr', 'sont': 'fr',
   'un': 'fr', 'une': 'fr', 'du': 'fr', 'des': 'fr', 'dans': 'fr', 'avec': 'fr',
-  'je': 'fr', 'tu': 'fr', 'il': 'fr', 'elle': 'fr', 'nous': 'fr', 'vous': 'fr', 'ils': 'fr', 'elles': 'fr',
+  'je': 'fr', 'tu': 'fr', 'il_fr': 'fr', 'elle': 'fr', 'nous': 'fr', 'vous': 'fr', 'ils': 'fr', 'elles': 'fr',
   
   // German
   'der': 'de', 'die': 'de', 'das': 'de', 'und': 'de', 'oder': 'de', 'aber': 'de', 'ist': 'de', 'sind': 'de',
@@ -119,8 +119,8 @@ const FUNCTION_WORD_MAPPING: Record<string, string> = {
   'este': 'pt', 'esta': 'pt', 'esse': 'pt', 'essa': 'pt', 'aquele': 'pt', 'aquela': 'pt', 'meu': 'pt', 'minha': 'pt',
   
   // Italian
-  'il': 'it', 'lo': 'it', 'gli': 'it', 'uno': 'it',
-  'di_it': 'it', 'del': 'it', 'della': 'it', 'nel': 'it', 'nella': 'it',
+  'il_it': 'it', 'lo': 'it', 'gli': 'it', 'uno': 'it',
+  'di_it': 'it', 'del_it': 'it', 'della': 'it', 'nel': 'it', 'nella': 'it',
   'lui': 'it', 'lei': 'it', 'noi': 'it', 'voi': 'it', 'loro': 'it', 'questo': 'it', 'quella': 'it'
 };
 

@@ -9,10 +9,7 @@ const nextConfig = {
   images: {
     unoptimized: true,
   },
-  experimental: {
-    // Suppress hydration warnings caused by browser extensions
-    suppressHydrationWarning: true
-  },
+  // Removed invalid experimental config
 }
 
 export default nextConfig
