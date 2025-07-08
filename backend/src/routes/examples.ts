@@ -90,6 +90,8 @@ exampleRoutes.get('/', asyncHandler(async (req: Request, res: Response) => {
   let examples = mockExamples;
   
   try {
+    console.log('[Examples GET] Attempting to fetch from Supabase...')
+    
     // Try database first
     const [dbExamples, total] = await Promise.all([
       supabase
@@ -102,7 +104,19 @@ exampleRoutes.get('/', asyncHandler(async (req: Request, res: Response) => {
         .select('*', { count: 'exact', head: true })
     ]);
     
+    console.log('[Examples GET] Database query result:', {
+      hasData: !!dbExamples.data,
+      count: dbExamples.data?.length || 0,
+      error: dbExamples.error
+    })
+    
+    if (dbExamples.error) {
+      console.error('[Examples GET] Supabase query error:', dbExamples.error)
+      throw dbExamples.error
+    }
+    
     if (dbExamples.data && dbExamples.data.length > 0) {
+      console.log('[Examples GET] Using database data')
       examples = dbExamples.data.map((example: any) => ({
         id: example.id,
         text: example.text,
@@ -115,9 +129,11 @@ exampleRoutes.get('/', asyncHandler(async (req: Request, res: Response) => {
         contributorId: example.user_id,
         isVerified: example.is_verified || false
       }));
+    } else {
+      console.log('[Examples GET] No database data found, using mock data')
     }
   } catch (error) {
-    console.log('Database not available, using mock data');
+    console.error('[Examples GET] Database error, using mock data:', error);
   }
 
   // Apply filters to mock data if database failed
@@ -220,43 +236,36 @@ exampleRoutes.post('/', asyncHandler(async (req: Request, res: Response) => {
   }
   
   try {
+    console.log('[Examples] Attempting to save to Supabase:', validatedData.text.substring(0, 50) + '...')
+    
     // Try to create in database first
     const { data: dbExample, error } = await supabase
       .from(tables.examples)
       .insert({
-      data: {
         text: validatedData.text,
         languages: validatedData.languages,
         context: validatedData.context,
         region: validatedData.region,
         platform: validatedData.platform,
         age: validatedData.age,
-        tokens: {
-          tokens: tokens,
-          phrases: phrases,
-          confidence: confidence,
-          userLanguageMatch: userLanguageMatch,
-          detectedLanguages: detectedLanguages,
-          // v2.1.2 breakthrough features
-          calibratedConfidence: confidence,
-          reliabilityScore: 0,
-          qualityAssessment: 'unknown',
-          calibrationMethod: 'none',
-          contextOptimization: null,
-          performanceMode: 'balanced',
-          analysisVersion: '2.1.2',
-          processingTimeMs: 0,
-          usedSwitchPrint: false
-        } as any, // Store enhanced NLP results with v2.1.2 features
-        switchPoints: switchPoints // Store phrase-boundary switch points
-        // Note: userId will be set when authentication is implemented
-      },
-      include: {
-        user: {
-          select: { id: true, name: true }
-        }
-      }
-    })
+        tokens: tokens,
+        phrases: phrases,
+        switch_points: switchPoints,
+        confidence: confidence,
+        detected_languages: detectedLanguages,
+        user_language_match: userLanguageMatch,
+        is_verified: false,
+        is_public: true
+      })
+      .select()
+      .single()
+    
+    if (error) {
+      console.error('[Examples] Supabase insert error:', error)
+      throw error
+    }
+    
+    console.log('[Examples] Successfully saved to Supabase with ID:', dbExample.id)
     newExample = dbExample
   } catch (error) {
     console.error('Error creating example in database:', error); // Use console.error for errors
@@ -360,47 +369,48 @@ exampleRoutes.post('/enhanced', asyncHandler(async (req: Request, res: Response)
     };
 
     try {
+      console.log('[Examples Enhanced] Attempting to save to Supabase:', validatedData.text.substring(0, 50) + '...')
+      
       // Try to save to database
       const { data: dbExample, error } = await supabase
       .from(tables.examples)
       .insert({
-        data: {
-          text: validatedData.text,
-          languages: validatedData.languages,
-          context: validatedData.context,
-          region: validatedData.region,
-          platform: validatedData.platform,
-          age: validatedData.age,
-          
-          // Store complete analysis as JSON with v2.1.2 features
-          tokens: {
-            analysisData: validatedData.analysisData,
-            userCorrections: validatedData.userCorrections,
-            submissionType: validatedData.submissionType,
-            version: validatedData.version,
-            // v2.1.2 breakthrough features
-            calibratedConfidence: validatedData.analysisData.calibratedConfidence,
-            reliabilityScore: validatedData.analysisData.reliabilityScore,
-            qualityAssessment: validatedData.analysisData.qualityAssessment,
-            calibrationMethod: validatedData.analysisData.calibrationMethod,
-            contextOptimization: validatedData.analysisData.contextOptimization,
-            performanceMode: validatedData.analysisData.performanceMode || validatedData.performanceMode
-          } as any,
-          
-          switchPoints: validatedData.analysisData.switchPoints,
-          confidence: validatedData.analysisData.confidence,
-          detectedLanguages: validatedData.analysisData.detectedLanguages,
-          isVerified: true
-        },
-        include: {
-          user: {
-            select: { id: true, name: true }
-          }
-        }
-      });
+        text: validatedData.text,
+        languages: validatedData.languages,
+        context: validatedData.context,
+        region: validatedData.region,
+        platform: validatedData.platform,
+        age: validatedData.age,
+        
+        // Store tokens as array (required by schema) with enhanced metadata
+        tokens: validatedData.analysisData.tokens.map((token: any) => ({
+          ...token,
+          // Add enhanced metadata to each token
+          submissionType: validatedData.submissionType,
+          version: validatedData.version,
+          calibratedConfidence: validatedData.analysisData.calibratedConfidence,
+          reliabilityScore: validatedData.analysisData.reliabilityScore,
+          qualityAssessment: validatedData.analysisData.qualityAssessment
+        })),
+        phrases: validatedData.analysisData.phrases,
+        switch_points: validatedData.analysisData.switchPoints,
+        confidence: validatedData.analysisData.confidence,
+        detected_languages: validatedData.analysisData.detectedLanguages,
+        user_language_match: validatedData.analysisData.userLanguageMatch,
+        is_verified: true,
+        is_public: true
+      })
+      .select()
+      .single();
+      
+      if (error) {
+        console.error('[Examples Enhanced] Supabase insert error:', error)
+        throw error
+      }
+      
+      console.log('[Examples Enhanced] Successfully saved to Supabase with ID:', dbExample.id)
       
       newExample = dbExample;
-      console.log('Enhanced example saved to database successfully');
       
     } catch (dbError) {
       console.error('Database save failed, using mock response:', dbError);
