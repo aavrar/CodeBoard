@@ -28,15 +28,22 @@ const PORT = process.env.PORT || 3001
 app.use(helmet())
 
 // CORS configuration
+const allowedOrigins = [
+  process.env.FRONTEND_URL || 'http://localhost:3000',
+  'http://localhost:3002',
+  'http://localhost:3001',
+  'http://localhost:3003',
+  'http://localhost:3004',
+  'http://localhost:3005'
+];
+
+// Add all Vercel preview URLs for production
+if (process.env.NODE_ENV === 'production') {
+  allowedOrigins.push(/https:\/\/.*\.vercel\.app$/);
+}
+
 app.use(cors({
-  origin: [
-    process.env.FRONTEND_URL || 'http://localhost:3000',
-    'http://localhost:3002',
-    'http://localhost:3001',
-    'http://localhost:3003',
-    'http://localhost:3004',
-    'http://localhost:3005'
-  ],
+  origin: allowedOrigins,
   credentials: true
 }))
 

@@ -317,8 +317,10 @@ router.post('/register', async (req, res) => {
 
 router.get('/user', async (req, res) => {
   try {
+    console.log('[OAuth User] Request received')
     const authHeader = req.headers.authorization
     if (!authHeader?.startsWith('Bearer ')) {
+      console.log('[OAuth User] No valid auth header:', authHeader)
       return res.status(401).json({
         success: false,
         data: null,
@@ -328,7 +330,22 @@ router.get('/user', async (req, res) => {
     }
 
     const token = authHeader.substring(7)
-    const decoded = jwt.verify(token, JWT_SECRET) as UserPayload
+    console.log('[OAuth User] Attempting to verify token:', token.substring(0, 20) + '...')
+    console.log('[OAuth User] JWT_SECRET defined:', !!JWT_SECRET)
+    
+    let decoded: UserPayload
+    try {
+      decoded = jwt.verify(token, JWT_SECRET) as UserPayload
+      console.log('[OAuth User] Token decoded successfully for user:', decoded.id)
+    } catch (jwtError) {
+      console.error('[OAuth User] JWT verification failed:', jwtError)
+      return res.status(401).json({
+        success: false,
+        data: null,
+        message: 'Invalid or expired token',
+        error: 'JWT verification failed'
+      })
+    }
 
     const { data: user, error: findError } = await supabase
       .from(tables.users)
@@ -350,10 +367,12 @@ router.get('/user', async (req, res) => {
       .single()
 
     if (findError) {
+      console.error('[OAuth User] Database error:', findError)
       handleSupabaseError(findError, 'user lookup')
     }
 
     if (!user) {
+      console.log('[OAuth User] User not found for ID:', decoded.id)
       return res.status(404).json({
         success: false,
         data: null,
@@ -362,9 +381,26 @@ router.get('/user', async (req, res) => {
       })
     }
 
+    console.log('[OAuth User] User found successfully:', user.email)
+    
+    // Map database fields to frontend expected format
+    const mappedUser = {
+      id: user.id,
+      email: user.email,
+      name: user.name,
+      displayName: user.display_name,
+      bio: user.bio,
+      profileImage: user.profile_image,
+      tier: user.tier,
+      authProvider: user.auth_provider,
+      emailVerified: user.email_verified,
+      createdAt: user.created_at,
+      preferredTools: user.preferred_tools
+    }
+    
     res.json({
       success: true,
-      data: user,
+      data: mappedUser,
       message: 'User retrieved successfully',
       error: null
     })

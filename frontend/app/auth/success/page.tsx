@@ -22,6 +22,11 @@ function AuthSuccessContent() {
 
       // Store the token in localStorage
       localStorage.setItem('authToken', token)
+      console.log('Token stored in localStorage:', token.substring(0, 20) + '...')
+      
+      // Verify token was stored
+      const storedToken = localStorage.getItem('authToken')
+      console.log('Token verification - stored successfully:', !!storedToken)
 
       // Refresh the user data
       await refreshUser()

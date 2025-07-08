@@ -15,6 +15,7 @@ const registerSchema = z.object({
 });
 
 authRoutes.post('/register', asyncHandler(async (req: Request, res: Response) => {
+  console.log('[Auth Register] Registration attempt for:', req.body.email)
   const validatedData = registerSchema.parse(req.body);
 
   // Check if user already exists
@@ -25,10 +26,17 @@ authRoutes.post('/register', asyncHandler(async (req: Request, res: Response) =>
     .single();
 
   if (checkError && checkError.code !== 'PGRST116') { // PGRST116 = not found (expected)
-    handleSupabaseError(checkError, 'user lookup');
+    console.error('[Auth Register] Database lookup error:', checkError)
+    return res.status(500).json({
+      success: false,
+      data: null,
+      message: 'Database error during registration',
+      error: 'Internal server error',
+    });
   }
 
   if (existingUser) {
+    console.log('[Auth Register] User already exists:', validatedData.email)
     return res.status(409).json({
       success: false,
       data: null,
@@ -37,6 +45,7 @@ authRoutes.post('/register', asyncHandler(async (req: Request, res: Response) =>
     });
   }
 
+  console.log('[Auth Register] Creating new user for:', validatedData.email)
   const passwordHash = await bcrypt.hash(validatedData.password, 10);
 
   // Create new user
@@ -56,8 +65,16 @@ authRoutes.post('/register', asyncHandler(async (req: Request, res: Response) =>
     .single();
 
   if (createError) {
-    handleSupabaseError(createError, 'user creation');
+    console.error('[Auth Register] User creation failed:', createError)
+    return res.status(500).json({
+      success: false,
+      data: null,
+      message: 'Failed to create user account',
+      error: 'Database error',
+    });
   }
+
+  console.log('[Auth Register] User created successfully:', user.id)
 
   const jwtSecret = process.env.JWT_SECRET || 'default-secret-key';
   const jwtExpiresIn = process.env.JWT_EXPIRES_IN || '24h';
@@ -73,9 +90,24 @@ authRoutes.post('/register', asyncHandler(async (req: Request, res: Response) =>
   const signOptions: SignOptions = { expiresIn: jwtExpiresIn as any };
   const token = jwt.sign(userPayload, jwtSecret, signOptions);
 
+  // Map database fields to frontend expected format
+  const mappedUser = {
+    id: user.id,
+    email: user.email,
+    name: user.name,
+    displayName: user.display_name,
+    bio: user.bio,
+    profileImage: user.profile_image,
+    tier: user.tier,
+    authProvider: user.auth_provider,
+    emailVerified: user.email_verified,
+    createdAt: user.created_at,
+    preferredTools: user.preferred_tools
+  };
+
   const response: ApiResponse = {
     success: true,
-    data: { user, token },
+    data: { user: mappedUser, token },
     message: 'User registered successfully',
     error: null,
   };
@@ -141,9 +173,24 @@ authRoutes.post('/login', asyncHandler(async (req: Request, res: Response) => {
   const signOptions: SignOptions = { expiresIn: jwtExpiresIn as any };
   const token = jwt.sign(userPayload, jwtSecret, signOptions);
 
+  // Map database fields to frontend expected format
+  const mappedUser = {
+    id: user.id,
+    email: user.email,
+    name: user.name,
+    displayName: user.display_name,
+    bio: user.bio,
+    profileImage: user.profile_image,
+    tier: user.tier,
+    authProvider: user.auth_provider,
+    emailVerified: user.email_verified,
+    createdAt: user.created_at,
+    preferredTools: user.preferred_tools
+  };
+
   const response: ApiResponse = {
     success: true,
-    data: { user, token },
+    data: { user: mappedUser, token },
     message: 'User logged in successfully',
     error: null,
   };
