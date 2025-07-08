@@ -53,13 +53,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         return
       }
 
+      console.log('Refreshing user with token:', token?.substring(0, 20) + '...')
+      
       const response = await api.get('/oauth/user', {
         headers: { Authorization: `Bearer ${token}` }
       })
 
+      console.log('Auth response:', response.data)
+
       if (response.data.success) {
         setUser(response.data.data)
       } else {
+        console.error('Auth failed:', response.data.message)
         localStorage.removeItem('authToken')
         setUser(null)
       }

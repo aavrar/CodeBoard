@@ -110,7 +110,7 @@ class FastTextService extends EventEmitter {
         const timeout = setTimeout(() => {
           console.error('[FastText Service] Worker initialization timeout');
           resolve(false);
-        }, 30000); // 30 second timeout
+        }, 60000); // 60 second timeout for Render deployment
 
         this.once('ready', () => {
           clearTimeout(timeout);
