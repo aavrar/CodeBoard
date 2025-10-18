@@ -3,9 +3,8 @@ import { z } from 'zod';
 import { supabase, tables, handleSupabaseError } from '../utils/supabase.js';
 import { ApiResponse, exampleSubmissionSchema } from '../types/index.js';
 import { asyncHandler } from '../middleware/errorHandler.js';
-import { analyzeSentence } from '../services/nlpService.js'; // Import the NLP service
-import { analyzeWithUserGuidance } from '../services/enhancedNlpService.js'; // Enhanced NLP service
-import { fastTextService } from '../services/fastTextService.js'; // FastText service
+import { analyzeWithUserGuidance } from '../services/enhancedNlpService.js'; // Enhanced ELD fallback service
+import { fastTextService } from '../services/fastTextService.js'; // FastText primary service
 export const exampleRoutes = Router();
 
 const getExamplesSchema = z.object({

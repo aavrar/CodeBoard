@@ -28,7 +28,7 @@ const PORT = process.env.PORT || 3001
 app.use(helmet())
 
 // CORS configuration
-const allowedOrigins = [
+const allowedOrigins: (string | RegExp)[] = [
   process.env.FRONTEND_URL || 'http://localhost:3000',
   'http://localhost:3002',
   'http://localhost:3001',

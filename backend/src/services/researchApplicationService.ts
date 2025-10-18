@@ -187,6 +187,18 @@ export class ResearchApplicationService {
       rejected: rejected || 0
     }
   }
+
+  getAvailableResearchTools(): string[] {
+    return [
+      'Advanced Analytics Dashboard',
+      'Data Export (CSV/JSON)',
+      'Bulk Upload Tools',
+      'API Access',
+      'Custom Filtering',
+      'Collaboration Tools',
+      'Citation Generator'
+    ]
+  }
 }
 
 export const researchApplicationService = new ResearchApplicationService()

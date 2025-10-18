@@ -1,4 +1,4 @@
-import express from 'express'
+import express, { Response } from 'express'
 import { z } from 'zod'
 import { researchApplicationService } from '../services/researchApplicationService.js'
 import { ApplicationStatus, UserTier, UserPayload, researchApplicationSchema } from '../types/index.js'
@@ -10,14 +10,15 @@ interface AuthenticatedRequest extends express.Request {
   user: UserPayload
 }
 
-router.post('/applications', authenticateToken, async (req: AuthenticatedRequest, res: Response) => {
+router.post('/applications', authenticateToken, async (req: express.Request, res: Response) => {
   try {
+    const user = (req as any).user as UserPayload
     const validatedData = researchApplicationSchema.parse(req.body)
 
-    const application = await researchApplicationService.createApplication(
-      req.user.id,
-      validatedData
-    )
+    const application = await researchApplicationService.createApplication({
+      userId: user.id,
+      ...validatedData
+    })
 
     res.status(201).json({
       success: true,
@@ -46,9 +47,10 @@ router.post('/applications', authenticateToken, async (req: AuthenticatedRequest
   }
 })
 
-router.get('/applications/my', authenticateToken, async (req: AuthenticatedRequest, res: Response) => {
+router.get('/applications/my', authenticateToken, async (req: express.Request, res: Response) => {
   try {
-    const applications = await researchApplicationService.getUserApplications(req.user.id)
+    const user = (req as any).user as UserPayload
+    const applications = await researchApplicationService.getApplicationsByUserId(user.id)
 
     res.json({
       success: true,
@@ -69,7 +71,7 @@ router.get('/applications/my', authenticateToken, async (req: AuthenticatedReque
 
 router.get('/applications/pending', authenticateToken, requireAdmin, async (req, res) => {
   try {
-    const applications = await researchApplicationService.getPendingApplications()
+    const applications = await researchApplicationService.getAllApplications('PENDING')
 
     res.json({
       success: true,
@@ -88,8 +90,9 @@ router.get('/applications/pending', authenticateToken, requireAdmin, async (req,
   }
 })
 
-router.get('/applications/:id', authenticateToken, async (req: AuthenticatedRequest, res: Response) => {
+router.get('/applications/:id', authenticateToken, async (req: express.Request, res: Response) => {
   try {
+    const user = (req as any).user as UserPayload
     const { id } = req.params
     const application = await researchApplicationService.getApplicationById(id)
 
@@ -102,7 +105,7 @@ router.get('/applications/:id', authenticateToken, async (req: AuthenticatedRequ
       })
     }
 
-    if (application.userId !== req.user.id && req.user.tier !== UserTier.ADMIN) {
+    if (application.user_id !== user.id && user.tier !== UserTier.ADMIN) {
       return res.status(403).json({
         success: false,
         data: null,
@@ -133,8 +136,9 @@ const reviewApplicationSchema = z.object({
   reviewNotes: z.string().max(1000, 'Review notes too long').optional()
 })
 
-router.put('/applications/:id/review', authenticateToken, requireAdmin, async (req: AuthenticatedRequest, res: Response) => {
+router.put('/applications/:id/review', authenticateToken, requireAdmin, async (req: express.Request, res: Response) => {
   try {
+    const user = (req as any).user as UserPayload
     const { id } = req.params
     const { status, reviewNotes } = reviewApplicationSchema.parse(req.body)
 
@@ -147,11 +151,13 @@ router.put('/applications/:id/review', authenticateToken, requireAdmin, async (r
       })
     }
 
-    const application = await researchApplicationService.reviewApplication(
+    const application = await researchApplicationService.updateApplicationStatus(
       id,
-      req.user.id,
-      status,
-      reviewNotes
+      {
+        status,
+        reviewNotes,
+        reviewedBy: user.id
+      }
     )
 
     res.json({

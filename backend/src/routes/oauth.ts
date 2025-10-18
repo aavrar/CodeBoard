@@ -5,6 +5,7 @@ import jwt from 'jsonwebtoken'
 import { supabase, tables, handleSupabaseError, User } from '../utils/supabase.js'
 import { oauthService } from '../services/oauthService'
 import { AuthProvider, UserTier, OAuthCallbackData, RegisterData, UserPayload } from '../types/index'
+import { asyncHandler } from '../middleware/errorHandler.js'
 
 const router = express.Router()
 
@@ -231,7 +232,7 @@ router.get('/github/callback', async (req, res) => {
   }
 })
 
-router.post('/register', async (req, res) => {
+router.post('/register', asyncHandler(async (req: express.Request, res: express.Response) => {
   try {
     const validatedData = req.body as RegisterData
 
@@ -313,9 +314,9 @@ router.post('/register', async (req, res) => {
       error: 'Internal server error'
     })
   }
-})
+}))
 
-router.get('/user', async (req, res) => {
+router.get('/user', asyncHandler(async (req: express.Request, res: express.Response) => {
   try {
     console.log('[OAuth User] Request received')
     const authHeader = req.headers.authorization
@@ -413,7 +414,7 @@ router.get('/user', async (req, res) => {
       error: 'Unauthorized'
     })
   }
-})
+}))
 
 
 export default router

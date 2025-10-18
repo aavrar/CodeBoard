@@ -1,27 +1,38 @@
 # CodeBoard
 
-A modern code-switching research platform powered by **FastText** for lightweight, efficient language detection with community-driven verification features.
+**Production-ready code-switching research platform** with FastText language detection and community-driven verification.
 
-## Overview
+## 🎯 Quick Start
 
-CodeBoard is a production-ready platform that enables researchers and communities to collect, analyze, and share real-world code-switching examples. Built with FastText for fast language detection and enhanced with manual tagging and community voting features for data quality assurance.
+**Live Platform**: https://codeboard.aahadv.com
+**Status**: ✅ Production-Ready for Faculty Testing
 
-## 🚀 **Current Status: Production-Ready Platform with FastText & Community Features**
+### For Researchers:
+1. Create account with .edu email (auto-researcher tier)
+2. Submit code-switching examples
+3. Explore corpus with 500+ real examples
+4. Export data for research (CSV/JSON)
 
-**Current Architecture (July 2025)**
-- ✅ **FastText Language Detection** - Lightweight, efficient detection for 176+ languages
-- ✅ **Supabase Integration** - Complete migration from Prisma to Supabase
-- ✅ **Community Voting System** - Real-time quality verification with user votes (FULLY FUNCTIONAL)
-- ✅ **Manual Tagging Interface** - Interactive switch point editing for registered users
-- ✅ **Quality Scoring & Verification** - Automatic verification status based on community feedback
-- ✅ **Comprehensive Reference Data** - 82 languages, 101 regions, 46 platforms
-- ✅ **Searchable UI Components** - Advanced dropdowns with search and filtering
-- ✅ **Role-Based Access Control** - Community/Researcher/Admin tiers with JWT validation
-- ✅ **Research Application Workflow** - Complete submission and approval system
-- ✅ **Real-time Analytics** - Dashboard with data visualization
-- ✅ **Performance Optimization** - <200MB memory footprint for free hosting
-- ✅ **Multi-tier Authentication** - JWT with OAuth support for Google and GitHub
-- ✅ **CUID Support** - Fixed validation schemas to support Supabase CUID identifiers
+### For Testing:
+See **FACULTY-TESTING-GUIDE.md** for evaluation protocol
+
+---
+
+## 🚀 Current Status (October 2025)
+
+**What's Actually Working**:
+- ✅ **FastText Language Detection** - 176+ languages, real-time analysis
+- ✅ **Live Supabase Database** - 500+ real code-switching examples
+- ✅ **Community Voting** - Upvote/downvote quality verification
+- ✅ **Multi-tier Auth** - Community/Researcher/Admin with JWT + OAuth
+- ✅ **Research Analytics** - Dashboard with language pair statistics
+- ✅ **Full Submission Flow** - Submit → Analyze → Vote → Export
+
+**What's NOT Used** (Removed):
+- ❌ SwitchPrint v2.1.2 - Too memory-intensive for Render free tier
+- ❌ Prisma - Using Supabase client directly
+
+**For Academic Paper**: See **RESEARCH-EVALUATION-FRAMEWORK.md**
 
 ## Performance Characteristics
 
