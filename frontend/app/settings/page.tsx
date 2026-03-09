@@ -26,12 +26,14 @@ import {
   Crown
 } from 'lucide-react'
 import { useAuth } from '@/contexts/auth-context'
+import { api, getAuthHeaders } from '@/lib/api'
 
 export default function SettingsPage() {
   const { user, isAuthenticated, isLoading } = useAuth()
   const [isSaving, setIsSaving] = useState(false)
   const [error, setError] = useState('')
   const [success, setSuccess] = useState('')
+  const SETTINGS_STORAGE_KEY = 'codeboard_user_settings'
   const [settings, setSettings] = useState({
     emailNotifications: true,
     dataProcessingOptIn: true,
@@ -48,16 +50,16 @@ export default function SettingsPage() {
     }
 
     if (user) {
-      // TODO: Load user settings from API
       loadUserSettings()
     }
   }, [user, isAuthenticated, isLoading, router])
 
-  const loadUserSettings = async () => {
+  const loadUserSettings = () => {
     try {
-      // TODO: Implement actual API call
-      // const response = await api.get('/user/settings')
-      // setSettings(response.data.settings)
+      const stored = localStorage.getItem(SETTINGS_STORAGE_KEY)
+      if (stored) {
+        setSettings(JSON.parse(stored))
+      }
     } catch (err) {
       setError('Failed to load settings')
     }
@@ -69,12 +71,7 @@ export default function SettingsPage() {
     setSuccess('')
 
     try {
-      // TODO: Implement actual API call
-      // const response = await api.put('/user/settings', settings)
-      
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1000))
-      
+      localStorage.setItem(SETTINGS_STORAGE_KEY, JSON.stringify(settings))
       setSuccess('Settings saved successfully!')
     } catch (err: any) {
       setError('Failed to save settings. Please try again.')
@@ -84,11 +81,28 @@ export default function SettingsPage() {
   }
 
   const handleExportData = async () => {
+    setError('')
+    setSuccess('')
     try {
-      // TODO: Implement data export
-      setSuccess('Data export initiated. You will receive an email when ready.')
+      const response = await api.get('/auth/export-data', {
+        headers: getAuthHeaders()
+      })
+
+      if (response.data.success) {
+        const dataStr = JSON.stringify(response.data.data, null, 2)
+        const blob = new Blob([dataStr], { type: 'application/json' })
+        const url = URL.createObjectURL(blob)
+        const link = document.createElement('a')
+        link.href = url
+        link.download = `codeboard-data-${new Date().toISOString().split('T')[0]}.json`
+        link.click()
+        URL.revokeObjectURL(url)
+        setSuccess('Data export downloaded successfully.')
+      } else {
+        setError(response.data.error || 'Failed to export data')
+      }
     } catch (err) {
-      setError('Failed to initiate data export')
+      setError('Failed to export data. Please try again.')
     }
   }
 
@@ -96,13 +110,22 @@ export default function SettingsPage() {
     const confirmed = window.confirm(
       'Are you sure you want to delete your account? This action cannot be undone.'
     )
-    
+
     if (confirmed) {
       try {
-        // TODO: Implement account deletion
-        setError('Account deletion is not yet implemented. Please contact support.')
+        const response = await api.delete('/auth/account', {
+          headers: getAuthHeaders()
+        })
+
+        if (response.data.success) {
+          localStorage.removeItem('authToken')
+          localStorage.removeItem(SETTINGS_STORAGE_KEY)
+          window.location.href = '/'
+        } else {
+          setError(response.data.error || 'Failed to delete account')
+        }
       } catch (err) {
-        setError('Failed to delete account')
+        setError('Failed to delete account. Please try again.')
       }
     }
   }

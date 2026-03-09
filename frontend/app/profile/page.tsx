@@ -23,6 +23,7 @@ import {
   X
 } from 'lucide-react'
 import { useAuth } from '@/contexts/auth-context'
+import { api, getAuthHeaders } from '@/lib/api'
 
 export default function ProfilePage() {
   const { user, isAuthenticated, isLoading } = useAuth()
@@ -58,14 +59,16 @@ export default function ProfilePage() {
     setSuccess('')
 
     try {
-      // TODO: Implement profile update API call
-      // const response = await api.put('/user/profile', formData)
-      
-      // Simulate API call for now
-      await new Promise(resolve => setTimeout(resolve, 1000))
-      
-      setSuccess('Profile updated successfully!')
-      setIsEditing(false)
+      const response = await api.put('/auth/profile', formData, {
+        headers: getAuthHeaders()
+      })
+
+      if (response.data.success) {
+        setSuccess('Profile updated successfully!')
+        setIsEditing(false)
+      } else {
+        setError(response.data.error || 'Failed to update profile.')
+      }
     } catch (err: any) {
       setError('Failed to update profile. Please try again.')
     } finally {

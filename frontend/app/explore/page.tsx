@@ -29,7 +29,7 @@ export default function ExplorePage() {
   const [filteredExamples, setFilteredExamples] = useState<CodeSwitchingExample[]>([])
   const [isLoading, setIsLoading] = useState(false)
 
-  // Available options - TODO: Replace with backend API calls
+  // Available options loaded from backend API
   const [availableLanguages, setAvailableLanguages] = useState<string[]>([])
   const [availableRegions, setAvailableRegions] = useState<string[]>([])
   const [availablePlatforms, setAvailablePlatforms] = useState<string[]>([])
@@ -110,8 +110,6 @@ export default function ExplorePage() {
 
   const downloadData = () => {
     try {
-      // TODO: In production, this should call a backend endpoint for proper data export
-      // with authentication and rate limiting
       const dataStr = JSON.stringify(filteredExamples, null, 2)
       const dataBlob = new Blob([dataStr], { type: "application/json" })
       const url = URL.createObjectURL(dataBlob)
@@ -170,7 +168,6 @@ export default function ExplorePage() {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">All Languages</SelectItem>
-                  {/* TODO: Replace with availableLanguages from API */}
                   {availableLanguages.map((lang) => (
                     <SelectItem key={lang} value={lang}>
                       {lang}
@@ -185,7 +182,6 @@ export default function ExplorePage() {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">All Regions</SelectItem>
-                  {/* TODO: Replace with availableRegions from API */}
                   {availableRegions.map((region) => (
                     <SelectItem key={region} value={region}>
                       {region}
@@ -200,7 +196,6 @@ export default function ExplorePage() {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">All Platforms</SelectItem>
-                  {/* TODO: Replace with availablePlatforms from API */}
                   {availablePlatforms.map((platform) => (
                     <SelectItem key={platform} value={platform}>
                       {platform}
@@ -255,7 +250,6 @@ export default function ExplorePage() {
                             {lang}
                           </Badge>
                         ))}
-                        {/* TODO: Add verification badge based on backend verification status */}
                         {example.isVerified && (
                           <Badge variant="outline" className="text-green-600 border-green-600">
                             Verified

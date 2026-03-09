@@ -3,6 +3,7 @@ import { z } from 'zod'
 import { researchApplicationService } from '../services/researchApplicationService.js'
 import { ApplicationStatus, UserTier, UserPayload, researchApplicationSchema } from '../types/index.js'
 import { authenticateToken, requireAdmin, requireOwnershipOrAdmin } from '../middleware/auth.js'
+import { asyncHandler } from '../middleware/errorHandler.js'
 
 const router = express.Router()
 
@@ -10,7 +11,7 @@ interface AuthenticatedRequest extends express.Request {
   user: UserPayload
 }
 
-router.post('/applications', authenticateToken, async (req: express.Request, res: Response) => {
+router.post('/applications', authenticateToken, asyncHandler(async (req: express.Request, res: Response) => {
   try {
     const user = (req as any).user as UserPayload
     const validatedData = researchApplicationSchema.parse(req.body)
@@ -45,9 +46,9 @@ router.post('/applications', authenticateToken, async (req: express.Request, res
       error: 'Bad request'
     })
   }
-})
+}))
 
-router.get('/applications/my', authenticateToken, async (req: express.Request, res: Response) => {
+router.get('/applications/my', authenticateToken, asyncHandler(async (req: express.Request, res: Response) => {
   try {
     const user = (req as any).user as UserPayload
     const applications = await researchApplicationService.getApplicationsByUserId(user.id)
@@ -67,9 +68,9 @@ router.get('/applications/my', authenticateToken, async (req: express.Request, r
       error: 'Internal server error'
     })
   }
-})
+}))
 
-router.get('/applications/pending', authenticateToken, requireAdmin, async (req, res) => {
+router.get('/applications/pending', authenticateToken, requireAdmin, asyncHandler(async (req: express.Request, res: Response) => {
   try {
     const applications = await researchApplicationService.getAllApplications('PENDING')
 
@@ -88,9 +89,9 @@ router.get('/applications/pending', authenticateToken, requireAdmin, async (req,
       error: 'Internal server error'
     })
   }
-})
+}))
 
-router.get('/applications/:id', authenticateToken, async (req: express.Request, res: Response) => {
+router.get('/applications/:id', authenticateToken, asyncHandler(async (req: express.Request, res: Response) => {
   try {
     const user = (req as any).user as UserPayload
     const { id } = req.params
@@ -129,14 +130,14 @@ router.get('/applications/:id', authenticateToken, async (req: express.Request, 
       error: 'Internal server error'
     })
   }
-})
+}))
 
 const reviewApplicationSchema = z.object({
   status: z.nativeEnum(ApplicationStatus),
   reviewNotes: z.string().max(1000, 'Review notes too long').optional()
 })
 
-router.put('/applications/:id/review', authenticateToken, requireAdmin, async (req: express.Request, res: Response) => {
+router.put('/applications/:id/review', authenticateToken, requireAdmin, asyncHandler(async (req: express.Request, res: Response) => {
   try {
     const user = (req as any).user as UserPayload
     const { id } = req.params
@@ -185,9 +186,9 @@ router.put('/applications/:id/review', authenticateToken, requireAdmin, async (r
       error: 'Bad request'
     })
   }
-})
+}))
 
-router.get('/applications/stats', authenticateToken, requireAdmin, async (req, res) => {
+router.get('/applications/stats', authenticateToken, requireAdmin, asyncHandler(async (req: express.Request, res: Response) => {
   try {
     const stats = await researchApplicationService.getApplicationStats()
 
@@ -206,9 +207,9 @@ router.get('/applications/stats', authenticateToken, requireAdmin, async (req, r
       error: 'Internal server error'
     })
   }
-})
+}))
 
-router.get('/tools', authenticateToken, async (req, res) => {
+router.get('/tools', authenticateToken, asyncHandler(async (req: express.Request, res: Response) => {
   try {
     const tools = researchApplicationService.getAvailableResearchTools()
 
@@ -227,6 +228,6 @@ router.get('/tools', authenticateToken, async (req, res) => {
       error: 'Internal server error'
     })
   }
-})
+}))
 
 export default router

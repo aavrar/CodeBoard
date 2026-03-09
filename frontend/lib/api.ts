@@ -1,5 +1,4 @@
 // API utility functions for backend integration
-// TODO: Replace with actual backend endpoints
 
 import type {
   CodeSwitchingExample,
@@ -14,7 +13,7 @@ import type {
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001/api"
 
-// Create axios-like API client
+// API client
 export const api = {
   get: async (url: string, config?: { headers?: Record<string, string> }) => {
     const response = await fetch(`${API_BASE_URL}${url}`, {
@@ -83,11 +82,15 @@ export const api = {
   }
 }
 
-// Authentication helpers
-// TODO: Implement with your auth provider (NextAuth, Supabase, etc.)
-export async function getAuthToken(): Promise<string | null> {
-  // Return JWT token from your auth system
-  return null
+export function getAuthToken(): string | null {
+  if (typeof window === 'undefined') return null
+  return localStorage.getItem('authToken')
+}
+
+export function getAuthHeaders(): Record<string, string> {
+  const token = getAuthToken()
+  if (!token) return {}
+  return { Authorization: `Bearer ${token}` }
 }
 
 // Examples API

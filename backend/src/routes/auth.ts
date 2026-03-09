@@ -198,6 +198,129 @@ authRoutes.post('/login', asyncHandler(async (req: Request, res: Response) => {
   res.json(response);
 }));
 
+const profileUpdateSchema = z.object({
+  name: z.string().max(100).optional(),
+  displayName: z.string().max(50).optional(),
+  bio: z.string().max(500).optional(),
+});
+
+authRoutes.put('/profile', authenticateToken, asyncHandler(async (req: Request, res: Response) => {
+  const validatedData = profileUpdateSchema.parse(req.body);
+  const userId = (req as any).user!.id;
+
+  const updatePayload: Record<string, string | undefined> = {};
+  if (validatedData.name !== undefined) updatePayload.name = validatedData.name;
+  if (validatedData.displayName !== undefined) updatePayload.display_name = validatedData.displayName;
+  if (validatedData.bio !== undefined) updatePayload.bio = validatedData.bio;
+
+  const { data: updatedUser, error } = await supabase
+    .from(tables.users)
+    .update(updatePayload)
+    .eq('id', userId)
+    .select()
+    .single();
+
+  if (error) {
+    return res.status(500).json({
+      success: false,
+      data: null,
+      message: 'Failed to update profile',
+      error: 'Database error',
+    });
+  }
+
+  const mappedUser = {
+    id: updatedUser.id,
+    email: updatedUser.email,
+    name: updatedUser.name,
+    displayName: updatedUser.display_name,
+    bio: updatedUser.bio,
+    profileImage: updatedUser.profile_image,
+    tier: updatedUser.tier,
+    authProvider: updatedUser.auth_provider,
+    emailVerified: updatedUser.email_verified,
+    createdAt: updatedUser.created_at,
+    preferredTools: updatedUser.preferred_tools
+  };
+
+  res.json({
+    success: true,
+    data: mappedUser,
+    message: 'Profile updated successfully',
+    error: null,
+  });
+}));
+
+authRoutes.get('/export-data', authenticateToken, asyncHandler(async (req: Request, res: Response) => {
+  const userId = (req as any).user!.id;
+
+  const { data: userData, error: userError } = await supabase
+    .from(tables.users)
+    .select('id, email, name, display_name, bio, tier, auth_provider, created_at')
+    .eq('id', userId)
+    .single();
+
+  if (userError) {
+    return res.status(500).json({
+      success: false,
+      data: null,
+      message: 'Failed to export user data',
+      error: 'Database error',
+    });
+  }
+
+  const { data: examples, error: examplesError } = await supabase
+    .from(tables.examples)
+    .select('*')
+    .eq('user_id', userId)
+    .order('created_at', { ascending: false });
+
+  if (examplesError) {
+    return res.status(500).json({
+      success: false,
+      data: null,
+      message: 'Failed to export examples data',
+      error: 'Database error',
+    });
+  }
+
+  res.json({
+    success: true,
+    data: {
+      user: userData,
+      examples: examples || [],
+      exportedAt: new Date().toISOString(),
+    },
+    message: 'Data exported successfully',
+    error: null,
+  });
+}));
+
+authRoutes.delete('/account', authenticateToken, asyncHandler(async (req: Request, res: Response) => {
+  const userId = (req as any).user!.id;
+
+  const { error } = await supabase
+    .from(tables.users)
+    .update({ is_active: false })
+    .eq('id', userId);
+
+  if (error) {
+    return res.status(500).json({
+      success: false,
+      data: null,
+      message: 'Failed to delete account',
+      error: 'Database error',
+    });
+  }
+
+  res.json({
+    success: true,
+    data: null,
+    message: 'Account deleted successfully',
+    error: null,
+  });
+}));
+
 authRoutes.get('/me', authenticateToken, asyncHandler(async (req: Request, res: Response) => {
   const { data: user, error: findError } = await supabase
     .from(tables.users)

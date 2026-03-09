@@ -1,7 +1,8 @@
-import { Router } from 'express';
+import { Router, Request, Response } from 'express';
 import { z } from 'zod';
 import { VotingService } from '../services/votingService.js';
 import { authenticateToken } from '../middleware/auth.js';
+import { asyncHandler } from '../middleware/errorHandler.js';
 
 const router = Router();
 
@@ -32,7 +33,7 @@ const manualTagSchema = z.object({
  * Submit or update a vote for an example
  * POST /api/voting/examples/:id/vote
  */
-router.post('/examples/:id/vote', authenticateToken, async (req, res) => {
+router.post('/examples/:id/vote', authenticateToken, asyncHandler(async (req: Request, res: Response) => {
   try {
     const { id: exampleId } = req.params;
     const userId = req.user!.id;
@@ -82,13 +83,13 @@ router.post('/examples/:id/vote', authenticateToken, async (req, res) => {
       error: 'Internal server error'
     });
   }
-});
+}));
 
 /**
  * Remove a vote
  * DELETE /api/voting/examples/:id/vote/:voteType
  */
-router.delete('/examples/:id/vote/:voteType', authenticateToken, async (req, res) => {
+router.delete('/examples/:id/vote/:voteType', authenticateToken, asyncHandler(async (req: Request, res: Response) => {
   try {
     const { id: exampleId, voteType } = req.params;
     const userId = req.user!.id;
@@ -124,13 +125,13 @@ router.delete('/examples/:id/vote/:voteType', authenticateToken, async (req, res
       error: 'Internal server error'
     });
   }
-});
+}));
 
 /**
  * Get vote statistics for an example
  * GET /api/voting/examples/:id/stats
  */
-router.get('/examples/:id/stats', async (req, res) => {
+router.get('/examples/:id/stats', asyncHandler(async (req: Request, res: Response) => {
   try {
     const { id: exampleId } = req.params;
     const userId = req.user?.id; // Optional - depends on auth
@@ -155,13 +156,13 @@ router.get('/examples/:id/stats', async (req, res) => {
       error: 'Internal server error'
     });
   }
-});
+}));
 
 /**
  * Submit manual tags for an example
  * POST /api/voting/examples/:id/tags
  */
-router.post('/examples/:id/tags', authenticateToken, async (req, res) => {
+router.post('/examples/:id/tags', authenticateToken, asyncHandler(async (req: Request, res: Response) => {
   try {
     const { id: exampleId } = req.params;
     const userId = req.user!.id;
@@ -212,13 +213,13 @@ router.post('/examples/:id/tags', authenticateToken, async (req, res) => {
       error: 'Internal server error'
     });
   }
-});
+}));
 
 /**
  * Get manual tags for an example
  * GET /api/voting/examples/:id/tags
  */
-router.get('/examples/:id/tags', async (req, res) => {
+router.get('/examples/:id/tags', asyncHandler(async (req: Request, res: Response) => {
   try {
     const { id: exampleId } = req.params;
     
@@ -242,13 +243,13 @@ router.get('/examples/:id/tags', async (req, res) => {
       error: 'Internal server error'
     });
   }
-});
+}));
 
 /**
  * Get user's contributions and stats
  * GET /api/voting/users/:id/contributions
  */
-router.get('/users/:id/contributions', authenticateToken, async (req, res) => {
+router.get('/users/:id/contributions', authenticateToken, asyncHandler(async (req: Request, res: Response) => {
   try {
     const { id: userId } = req.params;
     const requestingUserId = req.user!.id;
@@ -281,13 +282,13 @@ router.get('/users/:id/contributions', authenticateToken, async (req, res) => {
       error: 'Internal server error'
     });
   }
-});
+}));
 
 /**
  * Get community leaderboard
  * GET /api/voting/leaderboard
  */
-router.get('/leaderboard', async (req, res) => {
+router.get('/leaderboard', asyncHandler(async (req: Request, res: Response) => {
   try {
     const limit = parseInt(req.query.limit as string) || 10;
     
@@ -318,6 +319,6 @@ router.get('/leaderboard', async (req, res) => {
       error: 'Internal server error'
     });
   }
-});
+}));
 
 export default router;
